@@ -45,6 +45,7 @@ function EMS_StationStyle(EMS_Station) {
 	};
 }
 
+function EMS_StationMouseOver(e) {
 	var layer = e.target;
   if (EMS_Stations) {
 		var EMS_Station = layer.feature;
@@ -234,6 +235,7 @@ $( document ).ready(function() {
   
   $.getJSON("EMS_Monitoring_Locations.geojson", function(data) {
     EMS_Stations = L.geoJson(data, {
+      /*style: EMS_StationStyle, */
       onEachFeature: function(feature, layer) {
         layer.on({
           mouseover: EMS_StationMouseOver,
@@ -243,7 +245,9 @@ $( document ).ready(function() {
       }
     });
     map.fitBounds(EMS_Stations.getBounds());
+    EMS_Stations.addTo(map);
   
+  layerControl.addOverlay(EMS_Stations,'Environmental Monitoring System Station');
   });
   
   /*-----SCALEBAR-----*/
@@ -276,5 +280,7 @@ $( document ).ready(function() {
         simpCounter = 2;
       }
     }
+  }); */
   
+});
 
