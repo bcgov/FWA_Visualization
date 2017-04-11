@@ -120,7 +120,7 @@ $( document ).ready(function() {
         });
         
         popup.setLatLng(latlng);
-        popup.setContent("<b>" + String(EMS_Station.properties.MONITORING_LOCATION_ID) + "</b>" + "<br>Local Watershed Area: " + (EMS_Station.properties.WATERSHED_AREA).toFixed(1) + " sq km");
+        popup.setContent("<b>" + String(EMS_Station.properties.MONITORING_LOCATION_ID) + "</b>" + "<br>Local Watershed Area: " + (EMS_Station.properties.WATERSHED_AREA/100).toFixed(1) + " sq km");
         popup.addTo(map);
         
         //remove popup from map on 'mouseout'
@@ -241,7 +241,7 @@ $( document ).ready(function() {
  
   /*-----GEOJSON-----*/ 
   
-  $.getJSON("Testing.geojson", function(data) {
+  $.getJSON("EMS_Monitoring_Locations_QUES.geojson", function(data) {
     EMS_Stations = L.geoJson(data, {
       /*style: EMS_StationStyle, */
       onEachFeature: function(feature, layer) {
@@ -277,12 +277,12 @@ $( document ).ready(function() {
   var simpCounter = 0;
   
   map.on('zoomend', function(e) {
-    if (map.getZoom() >= 10) {
+    if (map.getZoom() >= 8) {
       if (simpCounter == 0 || simpCounter == 2) {
-      getJson("Testing.geojson");
+      getJson("EMS_Monitoring_Locations_QUES.geojson");
       simpCounter = 1;
       }
-    } else if (map.getZoom() <= 9) {
+    } else if (map.getZoom() <= 7) {
         if (simpCounter == 0 || simpCounter == 1) {
         getJson("FWA_BC_200M.geojson");
         simpCounter = 2;
