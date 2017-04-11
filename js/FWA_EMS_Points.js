@@ -20,8 +20,8 @@ function EMS_StationStyle(EMS_Station) {
 	var color = "#000000";
   var weight = 1;
 	if (highlightedEMS_Stn) {
-		var EMS_Station_Id = EMS_Station.properties.id;
-		var highlightedEMS_StnId = highlightedEMS_Stn.properties.id;
+		var EMS_Station_Id = EMS_Station.properties.MONITORING_LOCATION_ID;
+		var highlightedEMS_StnId = highlightedEMS_Stn.properties.MONITORING_LOCATION_ID;
 		if (highlightedEMS_StnId == EMS_Station_Id) {
 			color = "#00FFFF";
       weight = 10;
@@ -74,25 +74,32 @@ $( document ).ready(function() {
     //EMS_Stations.clearLayers();  I don't believe this needed.
     $.getJSON(simp, function(data){
       EMS_Stations = L.geoJson(data, {
-        style: EMS_StationStyle,
+        //style: EMS_StationStyle,
+        pointToLayer: function(feature, latlng) {
+          return L.circleMarker(latlng, {
+            radius: 6,
+            fillColor: "#ff7800",
+            color: "#000",
+            weight: 1,
+            opacity: 1,
+            fillOpacity: 0.8 
+            });
+        },
         onEachFeature: function(feature, layer) {
           layer.on({
             mouseover: EMS_StationMouseOver,
             mouseout: EMS_StationMouseOut
           });
           layer.on({
-            //click: addStreamLabelOnStream
-            //click: addStreamMarkerOnStream
-            //click: addStreamLabelInMap
             click: addEMS_StationPopupOnStation
             //mouseout: removeStreamLabels
         });
-          //layer.bindPopup(feature.properties.id);
+          //layer.bindPopup(feature.properties.MONITORING_LOCATION_ID);
         }
       });
       EMS_Stations.addTo(map);
       
-    layerControl.addOverlay(EMS_Stations,'FWA Stream Network'); //Added layerControl here
+    layerControl.addOverlay(EMS_Stations,'Environmental Monitoring System Station'); //Added layerControl here
     });
   }
 
@@ -103,7 +110,8 @@ $( document ).ready(function() {
       var EMS_Station = layer.feature;
       if (EMS_Station) {
         //var latlng = [50.5, -128.0];
-        var latlng = layer.getBounds().getCenter();
+        //var latlng = layer.getBounds().getCenter();
+        var latlng = [EMS_Station.geometry.coordinates[1],EMS_Station.geometry.coordinates[0]];
         
         /*-----L.popup-----*/
         var popup = L.popup({
@@ -112,7 +120,7 @@ $( document ).ready(function() {
         });
         
         popup.setLatLng(latlng);
-        popup.setContent("<b>" + String(EMS_Station.properties.name) + "</b>" + "<br>Segment length: " + (EMS_Station.properties.seglen/1000).toFixed(1) + " km" + "<br>Upstream length: " + (EMS_Station.properties.upslen/1000).toFixed(1) + " km" + "<br>Downstream length: " + (EMS_Station.properties.dwnslen/1000).toFixed(1) + " km");
+        popup.setContent("<b>" + String(EMS_Station.properties.MONITORING_LOCATION_ID) + "</b>" + "<br>Local Watershed Area: " + (EMS_Station.properties.WATERSHED_AREA).toFixed(1) + " sq km");
         popup.addTo(map);
         
         //remove popup from map on 'mouseout'
@@ -233,7 +241,7 @@ $( document ).ready(function() {
  
   /*-----GEOJSON-----*/ 
   
-  $.getJSON("EMS_Monitoring_Locations.geojson", function(data) {
+  $.getJSON("Testing.geojson", function(data) {
     EMS_Stations = L.geoJson(data, {
       /*style: EMS_StationStyle, */
       onEachFeature: function(feature, layer) {
@@ -245,9 +253,9 @@ $( document ).ready(function() {
       }
     });
     map.fitBounds(EMS_Stations.getBounds());
-    EMS_Stations.addTo(map);
+    //EMS_Stations.addTo(map);
   
-  layerControl.addOverlay(EMS_Stations,'Environmental Monitoring System Station');
+  //layerControl.addOverlay(EMS_Stations,'Environmental Monitoring System Station');
   });
   
   /*-----SCALEBAR-----*/
@@ -266,12 +274,12 @@ $( document ).ready(function() {
   MtPolleyMarker.bindPopup("Mt. Polley Mine").openPopup();
 
   /*-----ZOOM-AWARE GEOJSONs-----*/
-  /* var simpCounter = 0;
+  var simpCounter = 0;
   
   map.on('zoomend', function(e) {
     if (map.getZoom() >= 10) {
       if (simpCounter == 0 || simpCounter == 2) {
-      getJson("QUES_2O_NET10M.geojson");
+      getJson("Testing.geojson");
       simpCounter = 1;
       }
     } else if (map.getZoom() <= 9) {
@@ -280,7 +288,7 @@ $( document ).ready(function() {
         simpCounter = 2;
       }
     }
-  }); */
+  });
   
 });
 
