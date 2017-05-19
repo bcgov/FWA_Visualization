@@ -180,7 +180,7 @@ $( document ).ready(function() {
     });
     EMS_Stations.addTo(map);
     
-  layerControl.addOverlay(EMS_Stations,'Environmental Monitoring System Station'); //Added layerControl here
+  layerControl.addOverlay(EMS_Stations,'Environmental Monitoring System Station - Quesnel'); //Added layerControl here
   });
 }
   
@@ -292,7 +292,7 @@ $( document ).ready(function() {
         attribution: "© 2013-2016 GeoBC, DataBC, The Province of British Columbia",
       crs:crs84,
       styles: 'FWA_Watershed_Groups_Outlined'
-  }).addTo(map);
+  });
   
   /*-----FWA WATERSHED GROUPS LABELS-----*/  
   var fwaWatershedGroupsLabels = new L.tileLayer.wms("https://openmaps.gov.bc.ca/geo/pub/WHSE_BASEMAPPING.FWA_WATERSHED_GROUPS_POLY/ows", {
@@ -302,7 +302,7 @@ $( document ).ready(function() {
         attribution: "© 2013-2016 GeoBC, DataBC, The Province of British Columbia",
       crs:crs84,
       styles: 'FWA_Watershed_Groups_Labels'
-  }).addTo(map);
+  });
   
   /*-----FWA WATERSHED GROUPS: LAYER GROUP-----*/
   var fwaWatershedGroups_LyrGrp = new L.layerGroup([fwaWatershedGroups, fwaWatershedGroupsLabels]
@@ -327,7 +327,27 @@ $( document ).ready(function() {
       crs:crs84,
       styles: 'Protected_Rivers_Points'
   }).addTo(map);
+  
+  /*-----AQUIFERS POLY-----*/  
+  var aquiferPolys = new L.tileLayer.wms("https://openmaps.gov.bc.ca/geo/pub/WHSE_WATER_MANAGEMENT.GW_AQUIFERS_CLASSIFICATION_SVW/ows", {
+      layers: 'pub:WHSE_WATER_MANAGEMENT.GW_AQUIFERS_CLASSIFICATION_SVW',
+        format: 'image/png',
+        transparent: true,
+        attribution: "© 2013-2016 GeoBC, DataBC, The Province of British Columbia",
+      crs:crs84,
+      styles: 'Aquifers_BC_Outlined'
+  });
 
+  /*-----EMS Stations - BCGW-----*/  
+  var EMS_Stations_BCGW = new L.tileLayer.wms("https://openmaps.gov.bc.ca/geo/pub/WHSE_ENVIRONMENTAL_MONITORING.EMS_MONITORING_LOCN_TYPES_SVW/ows", {
+      layers: 'pub:WHSE_ENVIRONMENTAL_MONITORING.EMS_MONITORING_LOCN_TYPES_SVW',
+        format: 'image/png',
+        transparent: true,
+        attribution: "© 2013-2016 GeoBC, DataBC, The Province of British Columbia",
+      crs:crs84,
+      styles: 'Environmental_Monitoring_All_Stations'
+  });
+  
   /*-----Layer Control-----*/
   var layerControl = L.control.layers(
     {
@@ -336,11 +356,13 @@ $( document ).ready(function() {
     },
     {
     'Points of Diversion (Scale Dependent)': pointsOfDiversion,
+    'Environmental Monitoring Stations - BCGW': EMS_Stations_BCGW,
+    'Aquifers (Scale Dependent)': aquiferPolys,
     'FWA Watershed Groups (Scale Dependent)': fwaWatershedGroups_LyrGrp,
     'FWA Assessment Watersheds (Scale Dependent)': fwaAssessmentWatersheds
     },
     {
-    collapsed: false  
+    collapsed: true  
     }
   ).addTo(map);
  
