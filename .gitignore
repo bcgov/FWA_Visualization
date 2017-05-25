@@ -1,0 +1,8 @@
+.checkstyle
+.settings
+.classpath
+.project
+target
+*.log
+*.stackdump
+/node_modules/
