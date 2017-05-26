@@ -6,3 +6,4 @@ target
 *.log
 *.stackdump
 /node_modules/
+dist
