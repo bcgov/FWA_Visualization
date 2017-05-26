@@ -1,0 +1,14 @@
+.layout-columns {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  min-height: 100vh;
+}
+
+.layout-columns > .sideBar {
+  flex: 1;
+}
+
+.layout-columns > div {
+  flex: 3;
+}
