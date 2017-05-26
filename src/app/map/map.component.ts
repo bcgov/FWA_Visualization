@@ -1,12 +1,12 @@
 import 'rxjs/add/operator/toPromise';
 import {
-  Component, 
+  Component,
   ElementRef,
   OnInit,
   ViewChild
 } from '@angular/core';
-import { 
-  Http, 
+import {
+  Http,
   Response
 } from '@angular/http';
 
@@ -20,7 +20,7 @@ import * as L from 'leaflet';
 import { TiledMapLayer } from 'esri-leaflet';
 
 @Component({
-  selector: 'fwa-map',
+  selector: 'app-map',
   templateUrl: './map.component.html',
   styleUrls: ['./map.component.css']
 })
@@ -28,36 +28,36 @@ export class MapComponent implements OnInit {
   bcArcGisRestUrl = 'https://maps.gov.bc.ca/arcgis/rest/services';
 
   bcWmsUrl = 'https://openmaps.gov.bc.ca/geo/pub';
-  
+
   @ViewChild('map') mapElement: ElementRef;
 
-  layerControl : L.control;
-  
-  highlightedRiver : any;
-  
-  riverLayer :GeoJSON;
-  
-  riverPopup : Popup;
-  
+  layerControl: L.control;
+
+  highlightedRiver: any;
+
+  riverLayer: GeoJSON;
+
+  riverPopup: Popup;
+
   riverSource = 0;
-  
-  highlightedEmsStation : any;
-  
-  emsStationLayer :GeoJSON;
-  
-  emsStationPopup : Popup;
+
+  highlightedEmsStation: any;
+
+  emsStationLayer: GeoJSON;
+
+  emsStationPopup: Popup;
 
   emsStationSource = 0;
 
-  map : Map;
-  
+  map: Map;
+
   constructor(
-    private http : Http
+    private http: Http
   ) {
   }
 
   ngOnInit() {
-    let map = this.map = new Map(this.mapElement.nativeElement, {
+    const map = this.map = new Map(this.mapElement.nativeElement, {
       minZoom: 1,
       maxZoom: 18,
       maxBounds: [
@@ -65,13 +65,13 @@ export class MapComponent implements OnInit {
         [60.1, -113.9]
       ],
     });
-    
+
     L.control.scale({
       imperial: false
     }).addTo(map);
-    
-    let boundsHandler = ()=> {
-      map.setMinZoom( map.getBoundsZoom( map.options.maxBounds ) );
+
+    const boundsHandler = () => {
+      map.setMinZoom(map.getBoundsZoom(map.options.maxBounds));
     };
     boundsHandler();
     map.on('resize', boundsHandler);
@@ -91,61 +91,61 @@ export class MapComponent implements OnInit {
       url: this.bcArcGisRestUrl + '/province/roads_wm/MapServer',
       useCors: false
     });
-    
-    
+
+
     const provWebMercatorCache = new TiledMapLayer({
       url: this.bcArcGisRestUrl + '/province/web_mercator_cache/MapServer',
       useCors: false
     });
 
-    /*-----POINTS OF DIVERSION-----*/  
+    /*-----POINTS OF DIVERSION-----*/
     const pointsOfDiversion = new L.tileLayer.wms(this.bcWmsUrl + '/WHSE_WATER_MANAGEMENT.WLS_POD_LICENCE_SP/ows', {
       layers: 'pub:WHSE_WATER_MANAGEMENT.WLS_POD_LICENCE_SP',
-        format: 'image/png',
-        transparent: true,
-        attribution: '© 2013-2016 GeoBC, DataBC, The Province of British Columbia',
+      format: 'image/png',
+      transparent: true,
+      attribution: 'Â© 2013-2016 GeoBC, DataBC, The Province of British Columbia',
       styles: 'Points_of_Diversion'
     });
-    
-    /*-----FWA WATERSHED GROUPS POLY-----*/  
+
+    /*-----FWA WATERSHED GROUPS POLY-----*/
     const fwaWatershedGroups = new L.tileLayer.wms(this.bcWmsUrl + '/WHSE_BASEMAPPING.FWA_WATERSHED_GROUPS_POLY/ows', {
       layers: 'pub:WHSE_BASEMAPPING.FWA_WATERSHED_GROUPS_POLY',
-        format: 'image/png',
-        transparent: true,
-        attribution: '© 2013-2016 GeoBC, DataBC, The Province of British Columbia',
+      format: 'image/png',
+      transparent: true,
+      attribution: 'Â© 2013-2016 GeoBC, DataBC, The Province of British Columbia',
       styles: 'FWA_Watershed_Groups_Outlined'
     });
-    
-    /*-----FWA WATERSHED GROUPS LABELS-----*/  
+
+    /*-----FWA WATERSHED GROUPS LABELS-----*/
     const fwaWatershedGroupsLabels = new L.tileLayer.wms(this.bcWmsUrl + '/WHSE_BASEMAPPING.FWA_WATERSHED_GROUPS_POLY/ows', {
       layers: 'pub:WHSE_BASEMAPPING.FWA_WATERSHED_GROUPS_POLY',
-        format: 'image/png',
-        transparent: true,
-        attribution: '© 2013-2016 GeoBC, DataBC, The Province of British Columbia',
+      format: 'image/png',
+      transparent: true,
+      attribution: 'Â© 2013-2016 GeoBC, DataBC, The Province of British Columbia',
       styles: 'FWA_Watershed_Groups_Labels'
     });
-    
+
     /*-----FWA WATERSHED GROUPS: LAYER GROUP-----*/
     const fwaWatershedGroups_LyrGrp = new L.layerGroup([fwaWatershedGroups, fwaWatershedGroupsLabels]);
-        
-    /*-----FWA ASSESSMENT WATERSHEDS-----*/  
+
+    /*-----FWA ASSESSMENT WATERSHEDS-----*/
     const fwaAssessmentWatersheds = new L.tileLayer.wms(this.bcWmsUrl + '/WHSE_BASEMAPPING.FWA_ASSESSMENT_WATERSHEDS_POLY/ows', {
       layers: 'pub:WHSE_BASEMAPPING.FWA_ASSESSMENT_WATERSHEDS_POLY',
-        format: 'image/png',
-        transparent: true,
-        attribution: '© 2013-2016 GeoBC, DataBC, The Province of British Columbia',
+      format: 'image/png',
+      transparent: true,
+      attribution: 'Â© 2013-2016 GeoBC, DataBC, The Province of British Columbia',
       styles: 'FWA_Assessment_Watersheds_Outlined'
     });
-    
-    /*-----WATER RESOURCE MANAGMENT POINTS-----*/  
+
+    /*-----WATER RESOURCE MANAGMENT POINTS-----*/
     const wtrResourceMgmtPoints = new L.tileLayer.wms(this.bcWmsUrl + '/WHSE_WATER_MANAGEMENT.WLS_WATER_RESOURCE_MGMT_POINT/ows', {
-        layers: 'pub:WHSE_WATER_MANAGEMENT.WLS_WATER_RESOURCE_MGMT_POINT',
-          format: 'image/png',
-          transparent: true,
-          attribution: '© 2013-2016 GeoBC, DataBC, The Province of British Columbia',
-        styles: 'Protected_Rivers_Points'
+      layers: 'pub:WHSE_WATER_MANAGEMENT.WLS_WATER_RESOURCE_MGMT_POINT',
+      format: 'image/png',
+      transparent: true,
+      attribution: 'Â© 2013-2016 GeoBC, DataBC, The Province of British Columbia',
+      styles: 'Protected_Rivers_Points'
     });
-    
+
     provRoadsWM.addTo(map);
     provWebMercatorCache.addTo(map);
     pointsOfDiversion.addTo(map);
@@ -156,17 +156,17 @@ export class MapComponent implements OnInit {
 
     /*-----Layer Control-----*/
     this.layerControl = L.control.layers({
-        'Roads Base Map': provRoadsWM,
-        'Terrain Base Map': provWebMercatorCache
+      'Roads Base Map': provRoadsWM,
+      'Terrain Base Map': provWebMercatorCache
     },
-    {
-      'Points of Diversion (Scale Dependent)': pointsOfDiversion,
-      'FWA Watershed Groups (Scale Dependent)': fwaWatershedGroups_LyrGrp,
-      'FWA Assessment Watersheds (Scale Dependent)': fwaAssessmentWatersheds
-    },
-    {
-      collapsed: false  
-    }).addTo(map);
+      {
+        'Points of Diversion (Scale Dependent)': pointsOfDiversion,
+        'FWA Watershed Groups (Scale Dependent)': fwaWatershedGroups_LyrGrp,
+        'FWA Assessment Watersheds (Scale Dependent)': fwaAssessmentWatersheds
+      },
+      {
+        collapsed: false
+      }).addTo(map);
   }
 
   private riverInit() {
@@ -180,18 +180,18 @@ export class MapComponent implements OnInit {
         });
       }
     })
-     .addTo(this.map)
-    ;
+      .addTo(this.map)
+      ;
     this.layerControl.addOverlay(this.riverLayer, 'FWA Stream Network');
     const loadHandler = (e) => {
       const zoom = this.map.getZoom();
       if (zoom >= 10) {
-        if (this.riverSource != 1) {
+        if (this.riverSource !== 1) {
           this.loadJson(this.riverLayer, 'assets/QUES_2O_NET10M.geojson');
           this.riverSource = 1;
         }
       } else if (zoom <= 9) {
-        if (this.riverSource != 2) {
+        if (this.riverSource !== 2) {
           this.loadJson(this.riverLayer, 'assets/FWA_BC_200M.geojson');
           this.riverSource = 2;
         }
@@ -200,27 +200,26 @@ export class MapComponent implements OnInit {
     this.map.on('zoomend', loadHandler.bind(this));
     loadHandler(null);
   }
-  
+
   private riverStyle(river) {
-    var color = "#000000";
-    var weight = 1;
+    let color = '#000000';
+    let weight = 1;
     const highlightedRiver = this.highlightedRiver;
     if (highlightedRiver) {
-      var riverId = river.properties.id;
-      var highlightedRiverId = highlightedRiver.properties.id;
-      if (highlightedRiverId == riverId) {
-        color = "#00FFFF";
+      const riverId = river.properties.id;
+      const highlightedRiverId = highlightedRiver.properties.id;
+      if (highlightedRiverId === riverId) {
+        color = '#00FFFF';
         weight = 10;
-      }
-      else {
-        var highlightedRiverDescendentIds = highlightedRiver.properties.d;
+      } else {
+        const highlightedRiverDescendentIds = highlightedRiver.properties.d;
         if (highlightedRiverDescendentIds && highlightedRiverDescendentIds.includes(riverId)) {
-          color = "#FF0000";
+          color = '#FF0000';
           weight = 5;
         } else {
-          var highlightedRiverAncestorsIds = highlightedRiver.properties.a;
+          const highlightedRiverAncestorsIds = highlightedRiver.properties.a;
           if (highlightedRiverAncestorsIds && highlightedRiverAncestorsIds.includes(riverId)) {
-            color = "#00FF00";
+            color = '#00FF00';
             weight = 5;
           }
         }
@@ -233,9 +232,9 @@ export class MapComponent implements OnInit {
   }
 
   private riverMouseOver(e) {
-    var layer = e.target;
+    const layer = e.target;
     if (this.riverLayer) {
-      var river = layer.feature;
+      const river = layer.feature;
       if (river) {
         this.highlightedRiver = river;
       } else {
@@ -255,21 +254,21 @@ export class MapComponent implements OnInit {
       this.riverPopup = null;
     }
   }
-  
+
   private riverClick(e) {
-    var layer = e.target;
-    var river = layer.feature;
+    const layer = e.target;
+    const river = layer.feature;
     if (river) {
-      var latlng = layer.getBounds().getCenter();
-      
+      const latlng = layer.getBounds().getCenter();
+
       this.riverPopup = new Popup({
         offset: [10, -10],
         closeButton: false
       })
         .setLatLng(latlng)
-        .setContent('<b>' + String(river.properties.name) + '</b>' + '<br>Segment length: ' + (river.properties.seglen/1000).toFixed(1) + ' km' + '<br>Upstream length: ' + (river.properties.upslen/1000).toFixed(1) + ' km' + '<br>Downstream length: ' + (river.properties.dwnslen/1000).toFixed(1) + ' km')
+        .setContent('<b>' + String(river.properties.name) + '</b>' + '<br>Segment length: ' + (river.properties.seglen / 1000).toFixed(1) + ' km' + '<br>Upstream length: ' + (river.properties.upslen / 1000).toFixed(1) + ' km' + '<br>Downstream length: ' + (river.properties.dwnslen / 1000).toFixed(1) + ' km')
         .addTo(this.map)
-      ;
+        ;
     }
   }
 
@@ -282,7 +281,7 @@ export class MapComponent implements OnInit {
           color: '#000',
           weight: 1,
           opacity: 1,
-          fillOpacity: 0.8 
+          fillOpacity: 0.8
         });
       },
       onEachFeature: (feature, layer) => {
@@ -294,17 +293,17 @@ export class MapComponent implements OnInit {
       }
     })
       .addTo(this.map)
-    ;
+      ;
     this.layerControl.addOverlay(this.emsStationLayer, 'Environmental Monitoring System Station');
     const loadHandler = (e) => {
       const zoom = this.map.getZoom();
       if (zoom >= 10) {
-        if (this.emsStationSource != 1) {
+        if (this.emsStationSource !== 1) {
           this.loadJson(this.emsStationLayer, 'assets/EMS_Monitoring_Locations_QUES.geojson');
           this.emsStationSource = 1;
         }
       } else if (zoom <= 9) {
-        if (this.emsStationSource != 2) {
+        if (this.emsStationSource !== 2) {
           this.emsStationLayer.clearLayers();
           this.emsStationSource = 2;
         }
@@ -315,22 +314,22 @@ export class MapComponent implements OnInit {
   }
 
   private emsStationStyle(emsStation) {
-    var color = '#000000';
-    var weight = 1;
+    let color = '#000000';
+    let weight = 1;
     const highlightedEmsStation = this.highlightedEmsStation;
     if (highlightedEmsStation) {
-      var emsStation_Id = emsStation.properties.MONITORING_LOCATION_ID;
-      var highlightedEmsStationId = highlightedEmsStation.properties.MONITORING_LOCATION_ID;
-      if (highlightedEmsStationId == emsStation_Id) {
+      const emsStation_Id = emsStation.properties.MONITORING_LOCATION_ID;
+      const highlightedEmsStationId = highlightedEmsStation.properties.MONITORING_LOCATION_ID;
+      if (highlightedEmsStationId === emsStation_Id) {
         color = '#00FFFF';
         weight = 10;
       } else {
-        var highlightedEmsStationDescendentIds = highlightedEmsStation.properties.d;
+        const highlightedEmsStationDescendentIds = highlightedEmsStation.properties.d;
         if (highlightedEmsStationDescendentIds && highlightedEmsStationDescendentIds.includes(emsStation_Id)) {
           color = '#FF0000';
           weight = 5;
         } else {
-          var highlightedEmsStationAncestorsIds = highlightedEmsStation.properties.a;
+          const highlightedEmsStationAncestorsIds = highlightedEmsStation.properties.a;
           if (highlightedEmsStationAncestorsIds && highlightedEmsStationAncestorsIds.includes(emsStation_Id)) {
             color = '#00FF00';
             weight = 5;
@@ -345,8 +344,8 @@ export class MapComponent implements OnInit {
   }
 
   private emsStationMouseOver(e) {
-    var layer = e.target;
-    var emsStation = layer.feature;
+    const layer = e.target;
+    const emsStation = layer.feature;
     if (emsStation) {
       this.highlightedEmsStation = emsStation;
     } else {
@@ -365,31 +364,31 @@ export class MapComponent implements OnInit {
   }
 
   private emsStationClick(e) {
-    var layer = e.target;
-    var emsStation = layer.feature;
+    const layer = e.target;
+    const emsStation = layer.feature;
     if (emsStation) {
-      var latlng = [emsStation.geometry.coordinates[1], emsStation.geometry.coordinates[0]];
+      const latlng = [emsStation.geometry.coordinates[1], emsStation.geometry.coordinates[0]];
 
       this.emsStationPopup = new Popup({
-          offset: [10, -10],
-          closeButton: false
+        offset: [10, -10],
+        closeButton: false
       })
         .setLatLng(latlng)
         .setContent('<b>' + String(emsStation.properties.MONITORING_LOCATION_ID) + '</b>' + '<br>Local Watershed Area: ' + (emsStation.properties.WATERSHED_AREA / 100).toFixed(1) + ' sq km')
         .addTo(this.map)
-      ;
+        ;
     }
   }
   private tempLayersInit() {
     /*-----MT. POLLEY MINE MARKER-----*/
-    var mtPolleyMarker = new CircleMarker([52.513437,-121.596309], {
+    const mtPolleyMarker = new CircleMarker([52.513437, -121.596309], {
       title: 'Mt. Polley Mine',
       weight: 7
     }).addTo(this.map);
     mtPolleyMarker.bindPopup('Mt. Polley Mine').openPopup();
   }
-  
-  private loadJson(layer : GeoJSON, file : string) {
+
+  private loadJson(layer: GeoJSON, file: string) {
     this.http.get(file).toPromise().then(response => {
       console.log(file);
       layer.clearLayers();
@@ -398,3 +397,4 @@ export class MapComponent implements OnInit {
     });
   }
 }
+
