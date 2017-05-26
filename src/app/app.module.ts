@@ -3,6 +3,9 @@ import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpModule } from '@angular/http';
 
+import { TabsModule } from 'ngx-bootstrap/tabs';
+
+import { RiverService } from './river.service';
 import { MapComponent } from './map/map.component';
 import { LayoutComponent } from './layout/layout.component';
 import { SideBarComponent } from './side-bar/side-bar.component';
@@ -16,9 +19,13 @@ import { SideBarComponent } from './side-bar/side-bar.component';
   imports: [
     BrowserModule,
     FormsModule,
-    HttpModule
+    HttpModule,
+
+    TabsModule.forRoot()
   ],
-  providers: [],
+  providers: [
+    RiverService
+  ],
   bootstrap: [LayoutComponent]
 })
 export class AppModule { }

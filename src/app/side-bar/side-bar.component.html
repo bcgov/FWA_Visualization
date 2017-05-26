@@ -1,1 +1,31 @@
-Sidebar
+<tabset  #tabs>
+  <tab>
+    <ng-template tabHeading><i class="glyphicon glyphicon-question-sign" aria-hidden="true"></i> River Demo</ng-template>
+    <p>Click on the stream to view info</p>
+  </tab>
+  <tab [disabled]="!river">
+    <ng-template tabHeading>River</ng-template>
+    <div *ngIf="river">
+      <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+          <tr>
+            <th>Name</th>
+            <td>{{river.properties.name}}</td>
+          </tr>
+          <tr>
+            <th>Segment length</th>
+            <td>{{(river.properties.seglen / 1000).toFixed(1)}} km</td>
+          </tr>
+          <tr>
+            <th>Upstream length</th>
+            <td>{{(river.properties.upslen / 1000).toFixed(1)}} km</td>
+          </tr>
+          <tr>
+            <th>Downstream length</th>
+            <td>{{(river.properties.dwnslen / 1000).toFixed(1)}} km</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </tab>
+</tabset>

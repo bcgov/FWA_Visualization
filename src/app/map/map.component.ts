@@ -19,6 +19,8 @@ import {
 import * as L from 'leaflet';
 import { TiledMapLayer } from 'esri-leaflet';
 
+import { RiverService } from '../river.service';
+
 @Component({
   selector: 'app-map',
   templateUrl: './map.component.html',
@@ -33,11 +35,7 @@ export class MapComponent implements OnInit {
 
   layerControl: L.control;
 
-  highlightedRiver: any;
-
   riverLayer: GeoJSON;
-
-  riverPopup: Popup;
 
   riverSource = 0;
 
@@ -52,7 +50,8 @@ export class MapComponent implements OnInit {
   map: Map;
 
   constructor(
-    private http: Http
+    private http: Http,
+    private riverService: RiverService
   ) {
   }
 
@@ -204,7 +203,7 @@ export class MapComponent implements OnInit {
   private riverStyle(river) {
     let color = '#000000';
     let weight = 1;
-    const highlightedRiver = this.highlightedRiver;
+    const highlightedRiver = this.riverService.highlightedRiver;
     if (highlightedRiver) {
       const riverId = river.properties.id;
       const highlightedRiverId = highlightedRiver.properties.id;
@@ -236,22 +235,18 @@ export class MapComponent implements OnInit {
     if (this.riverLayer) {
       const river = layer.feature;
       if (river) {
-        this.highlightedRiver = river;
+        this.riverService.highlightedRiver = river;
       } else {
-        this.highlightedRiver = undefined;
+        this.riverService.highlightedRiver = undefined;
       }
       this.riverLayer.setStyle(this.riverLayer.options.style);
     }
   }
 
   private riverMouseOut(e) {
-    this.highlightedRiver = undefined;
+    this.riverService.highlightedRiver = undefined;
     if (this.riverLayer) {
       this.riverLayer.setStyle(this.riverLayer.options.style);
-    }
-    if (this.riverPopup) {
-      this.map.removeLayer(this.riverPopup);
-      this.riverPopup = null;
     }
   }
 
@@ -259,16 +254,7 @@ export class MapComponent implements OnInit {
     const layer = e.target;
     const river = layer.feature;
     if (river) {
-      const latlng = layer.getBounds().getCenter();
-
-      this.riverPopup = new Popup({
-        offset: [10, -10],
-        closeButton: false
-      })
-        .setLatLng(latlng)
-        .setContent('<b>' + String(river.properties.name) + '</b>' + '<br>Segment length: ' + (river.properties.seglen / 1000).toFixed(1) + ' km' + '<br>Upstream length: ' + (river.properties.upslen / 1000).toFixed(1) + ' km' + '<br>Downstream length: ' + (river.properties.dwnslen / 1000).toFixed(1) + ' km')
-        .addTo(this.map)
-        ;
+      this.riverService.selectedRiver = river;
     }
   }
 
