@@ -4,8 +4,7 @@ import { Subject } from 'rxjs/Subject';
 import {
   CircleMarker,
   GeoJSON,
-  Map,
-  Popup
+  Map
 } from 'leaflet';
 import * as L from 'leaflet';
 
@@ -19,9 +18,11 @@ export class RiverService {
 
   private highlightedRivers: any[] = [];
 
+  highlightedWatershedCodes: string[] = [];
+
   private highlightedStyle = {
     color: '#00FFFF',
-    weight: 10
+    weight: 5
   };
 
   private highlightedStyleAncestor = {
@@ -38,9 +39,11 @@ export class RiverService {
 
   riverSource = 0;
 
-  private _selectedRiver: string;
+  selectedRiver: string;
 
-  public selectedRiverChange: Subject<string> = new Subject<string>();
+  public selectedRiverChange: Subject<any> = new Subject<any>();
+
+  public highlightedRiverChange: Subject<any> = new Subject<any>();
 
   constructor() {
   }
@@ -60,6 +63,7 @@ export class RiverService {
         mouseout: this.riverMouseOut.bind(this),
         click: this.riverClick.bind(this)
       }) //
+      .setZIndex(1)
       .addTo(map);
     mapComponent.layerControl.addOverlay(this.riversLayer, 'FWA Stream Network');
     const loadHandler = (e) => {
@@ -92,13 +96,14 @@ export class RiverService {
     this.clearHighlightedRiver();
   }
 
-
   private clearHighlightedRiver() {
     this.highlightedRiver = null;
     for (const oldRiverLayer of this.highlightedRivers) {
       this.riversLayer.resetStyle(oldRiverLayer);
     }
     this.highlightedRivers = [];
+    this.highlightedWatershedCodes = [];
+    this.highlightedRiverChange.next(null);
   }
 
   public getRiver(id: number): any {
@@ -115,48 +120,53 @@ export class RiverService {
   }
 
   private riverClick(e) {
-    const layer = e.target;
-    const river = layer.feature;
-    if (river) {
-      this.selectedRiver = river;
-    }
+    this.setSelectedRiver(e.layer.feature);
   }
 
   private riverMouseOver(e) {
     const riverLayer = e.layer;
-    const river = riverLayer.feature;
-    this.clearHighlightedRiver();
-    if (river) {
-      this.highlightedRivers = [];
-      this.highlightedRiver = river;
-      riverLayer.setStyle(this.highlightedStyle);
-      this.highlightedRivers.push(riverLayer);
-      this.setHighlightedRiverStyles(river.properties.a, this.highlightedStyleAncestor);
-      this.setHighlightedRiverStyles(river.properties.d, this.highlightedStyleDescendent);
-    } else {
-      this.highlightedRiver = null;
-    }
+    this.setHighlightedRiver(riverLayer);
   }
 
   private riverMouseOut(e) {
     this.clearHighlightedRiver();
   }
 
-  public get selectedRiver(): string {
-    return this._selectedRiver;
+  public setHighlightedRiver(riverLayer: any) {
+    this.highlightedRiver = riverLayer;
+    this.clearHighlightedRiver();
+    if (riverLayer) {
+      this.highlightedRiver = riverLayer;
+      riverLayer.setStyle(this.highlightedStyle);
+      this.highlightedRivers.push(riverLayer);
+      const watershedCode = riverLayer.feature.properties.fwawsc;
+      if (this.highlightedWatershedCodes.indexOf(watershedCode) === -1) {
+        this.highlightedWatershedCodes.push(watershedCode);
+      }
+      const river = riverLayer.feature;
+      this.setHighlightedRiverStyles(river.properties.a, this.highlightedStyleAncestor, false);
+      this.setHighlightedRiverStyles(river.properties.d, this.highlightedStyleDescendent, true);
+    }
+    this.highlightedRiverChange.next(riverLayer);
   }
 
-  public set selectedRiver(selectedRiver: string) {
-    this._selectedRiver = selectedRiver;
+  public setSelectedRiver(selectedRiver: any) {
+    this.selectedRiver = selectedRiver;
     this.selectedRiverChange.next(selectedRiver);
   }
 
-  private setHighlightedRiverStyles(riverIds: number[], style: any) {
+  private setHighlightedRiverStyles(riverIds: number[], style: any, descendent: boolean) {
     for (const riverId of riverIds) {
       const riverLayer = this.getRiverLayer(riverId);
       if (riverLayer) {
         this.highlightedRivers.push(riverLayer);
         riverLayer.setStyle(style);
+        if (descendent) {
+          const watershedCode = riverLayer.feature.properties.fwawsc;
+          if (this.highlightedWatershedCodes.indexOf(watershedCode) === -1) {
+            this.highlightedWatershedCodes.push(watershedCode);
+          }
+        }
       }
     }
   }

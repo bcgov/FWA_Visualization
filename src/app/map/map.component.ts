@@ -19,6 +19,7 @@ import {
 import * as L from 'leaflet';
 import { TiledMapLayer } from 'esri-leaflet';
 
+import { EmsStationService } from '../ems-station.service';
 import { RiverService } from '../river.service';
 
 @Component({
@@ -35,19 +36,12 @@ export class MapComponent implements OnInit {
 
   layerControl: L.control;
 
-  highlightedEmsStation: any;
-
-  emsStationLayer: GeoJSON;
-
-  emsStationPopup: Popup;
-
-  emsStationSource = 0;
-
   map: Map;
 
   constructor(
     private http: Http,
-    private riverService: RiverService
+    private riverService: RiverService,
+    private emsStationService: EmsStationService
   ) {
   }
 
@@ -74,7 +68,7 @@ export class MapComponent implements OnInit {
 
     this.baseLayersInit();
     this.riverService.init(this, this.map);
-    this.emsStationInit();
+    this.emsStationService.init(this, this.map);
     this.tempLayersInit();
   }
 
@@ -164,120 +158,15 @@ export class MapComponent implements OnInit {
       }).addTo(map);
   }
 
-  private emsStationInit() {
-    this.emsStationLayer = L.geoJson([], {
-      pointToLayer: function(feature, latlng) {
-        return new CircleMarker(latlng, {
-          radius: 6,
-          fillColor: '#ff7800',
-          color: '#000',
-          weight: 1,
-          opacity: 1,
-          fillOpacity: 0.8
-        });
-      },
-      onEachFeature: (feature, layer) => {
-        layer.on({
-          mouseover: this.emsStationMouseOver.bind(this),
-          mouseout: this.emsStationMouseOut.bind(this),
-          click: this.emsStationClick.bind(this)
-        });
-      }
-    })
-      .addTo(this.map)
-      ;
-    this.layerControl.addOverlay(this.emsStationLayer, 'Environmental Monitoring System Station');
-    const loadHandler = (e) => {
-      const zoom = this.map.getZoom();
-      if (zoom >= 10) {
-        if (this.emsStationSource !== 1) {
-          this.loadJson(this.emsStationLayer, 'assets/EMS_Monitoring_Locations_QUES.geojson');
-          this.emsStationSource = 1;
-        }
-      } else if (zoom <= 9) {
-        if (this.emsStationSource !== 2) {
-          this.emsStationLayer.clearLayers();
-          this.emsStationSource = 2;
-        }
-      }
-    };
-    this.map.on('zoomend', loadHandler.bind(this));
-    loadHandler(null);
-  }
-
-  private emsStationStyle(emsStation) {
-    let color = '#000000';
-    let weight = 1;
-    const highlightedEmsStation = this.highlightedEmsStation;
-    if (highlightedEmsStation) {
-      const emsStation_Id = emsStation.properties.MONITORING_LOCATION_ID;
-      const highlightedEmsStationId = highlightedEmsStation.properties.MONITORING_LOCATION_ID;
-      if (highlightedEmsStationId === emsStation_Id) {
-        color = '#00FFFF';
-        weight = 10;
-      } else {
-        const highlightedEmsStationDescendentIds = highlightedEmsStation.properties.d;
-        if (highlightedEmsStationDescendentIds && highlightedEmsStationDescendentIds.includes(emsStation_Id)) {
-          color = '#FF0000';
-          weight = 5;
-        } else {
-          const highlightedEmsStationAncestorsIds = highlightedEmsStation.properties.a;
-          if (highlightedEmsStationAncestorsIds && highlightedEmsStationAncestorsIds.includes(emsStation_Id)) {
-            color = '#00FF00';
-            weight = 5;
-          }
-        }
-      }
-    }
-    return {
-      color: color,
-      weight: weight
-    };
-  }
-
-  private emsStationMouseOver(e) {
-    const layer = e.target;
-    const emsStation = layer.feature;
-    if (emsStation) {
-      this.highlightedEmsStation = emsStation;
-    } else {
-      this.highlightedEmsStation = undefined;
-    }
-    this.emsStationLayer.setStyle(this.emsStationStyle.bind(this));
-  }
-
-  private emsStationMouseOut(e) {
-    this.highlightedEmsStation = undefined;
-    this.emsStationLayer.setStyle(this.emsStationStyle.bind(this));
-    if (this.emsStationPopup) {
-      this.map.removeLayer(this.emsStationPopup);
-      this.emsStationPopup = null;
-    }
-  }
-
-  private emsStationClick(e) {
-    const layer = e.target;
-    const emsStation = layer.feature;
-    if (emsStation) {
-      const latlng = [emsStation.geometry.coordinates[1], emsStation.geometry.coordinates[0]];
-
-      this.emsStationPopup = new Popup({
-        offset: [10, -10],
-        closeButton: false
-      })
-        .setLatLng(latlng)
-        .setContent('<b>' + String(emsStation.properties.MONITORING_LOCATION_ID) + '</b>' + '<br>Local Watershed Area: ' + (emsStation.properties.WATERSHED_AREA / 100).toFixed(1) + ' sq km')
-        .addTo(this.map)
-        ;
-    }
-  }
   private tempLayersInit() {
     /*-----MT. POLLEY MINE MARKER-----*/
-    const mtPolleyMarker = new CircleMarker([52.513437, -121.596309], {
+    const location = [52.513437, -121.596309];
+    const mtPolleyMarker = new CircleMarker(location, {
       title: 'Mt. Polley Mine',
       weight: 7
     }).addTo(this.map);
     mtPolleyMarker.bindPopup('Mt. Polley Mine').openPopup();
+    this.map.setView(location, 10);
   }
 
   public loadJson(layer: GeoJSON, file: string) {

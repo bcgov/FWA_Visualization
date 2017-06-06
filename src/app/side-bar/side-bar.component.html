@@ -13,6 +13,10 @@
             <td>{{river.properties.name}}</td>
           </tr>
           <tr>
+            <th>Watershed Code</th>
+            <td>{{river.properties.fwawsc}}</td>
+          </tr>
+          <tr>
             <th>Segment length</th>
             <td>{{(river.properties.seglen / 1000).toFixed(1)}} km</td>
           </tr>
@@ -23,6 +27,27 @@
           <tr>
             <th>Downstream length</th>
             <td>{{(river.properties.dwnslen / 1000).toFixed(1)}} km</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </tab>
+  <tab [disabled]="!emsStation">
+    <ng-template tabHeading>EmsStation</ng-template>
+    <div *ngIf="emsStation">
+      <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+          <tr>
+            <th>ID</th>
+            <td>{{emsStation.properties.MONITORING_LOCATION_ID}}</td>
+          </tr>
+          <tr>
+            <th>Name</th>
+            <td>{{emsStation.properties.MONITORING_LOCATION_NAME}}</td>
+          </tr>
+          <tr>
+            <th>Watershed Code</th>
+            <td>{{emsStation.properties.FWA_WATERSHED_CODE}}</td>
           </tr>
         </table>
       </div>
