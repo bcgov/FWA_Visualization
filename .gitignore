@@ -5,5 +5,5 @@
 target
 *.log
 *.stackdump
-/node_modules/
+node_modules
 dist
