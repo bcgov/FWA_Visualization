@@ -35,10 +35,6 @@ export class MapComponent implements OnInit {
 
   layerControl: L.control;
 
-  riverLayer: GeoJSON;
-
-  riverSource = 0;
-
   highlightedEmsStation: any;
 
   emsStationLayer: GeoJSON;
@@ -77,7 +73,7 @@ export class MapComponent implements OnInit {
     map.fitWorld();
 
     this.baseLayersInit();
-    this.riverInit();
+    this.riverService.init(this, this.map);
     this.emsStationInit();
     this.tempLayersInit();
   }
@@ -102,7 +98,7 @@ export class MapComponent implements OnInit {
       layers: 'pub:WHSE_WATER_MANAGEMENT.WLS_POD_LICENCE_SP',
       format: 'image/png',
       transparent: true,
-      attribution: 'Â© 2013-2016 GeoBC, DataBC, The Province of British Columbia',
+      attribution: '© 2013-2016 GeoBC, DataBC, The Province of British Columbia',
       styles: 'Points_of_Diversion'
     });
 
@@ -111,7 +107,7 @@ export class MapComponent implements OnInit {
       layers: 'pub:WHSE_BASEMAPPING.FWA_WATERSHED_GROUPS_POLY',
       format: 'image/png',
       transparent: true,
-      attribution: 'Â© 2013-2016 GeoBC, DataBC, The Province of British Columbia',
+      attribution: '© 2013-2016 GeoBC, DataBC, The Province of British Columbia',
       styles: 'FWA_Watershed_Groups_Outlined'
     });
 
@@ -120,7 +116,7 @@ export class MapComponent implements OnInit {
       layers: 'pub:WHSE_BASEMAPPING.FWA_WATERSHED_GROUPS_POLY',
       format: 'image/png',
       transparent: true,
-      attribution: 'Â© 2013-2016 GeoBC, DataBC, The Province of British Columbia',
+      attribution: '© 2013-2016 GeoBC, DataBC, The Province of British Columbia',
       styles: 'FWA_Watershed_Groups_Labels'
     });
 
@@ -132,7 +128,7 @@ export class MapComponent implements OnInit {
       layers: 'pub:WHSE_BASEMAPPING.FWA_ASSESSMENT_WATERSHEDS_POLY',
       format: 'image/png',
       transparent: true,
-      attribution: 'Â© 2013-2016 GeoBC, DataBC, The Province of British Columbia',
+      attribution: '© 2013-2016 GeoBC, DataBC, The Province of British Columbia',
       styles: 'FWA_Assessment_Watersheds_Outlined'
     });
 
@@ -141,7 +137,7 @@ export class MapComponent implements OnInit {
       layers: 'pub:WHSE_WATER_MANAGEMENT.WLS_WATER_RESOURCE_MGMT_POINT',
       format: 'image/png',
       transparent: true,
-      attribution: 'Â© 2013-2016 GeoBC, DataBC, The Province of British Columbia',
+      attribution: '© 2013-2016 GeoBC, DataBC, The Province of British Columbia',
       styles: 'Protected_Rivers_Points'
     });
 
@@ -166,96 +162,6 @@ export class MapComponent implements OnInit {
       {
         collapsed: false
       }).addTo(map);
-  }
-
-  private riverInit() {
-    this.riverLayer = L.geoJson([], {
-      style: this.riverStyle.bind(this),
-      onEachFeature: (feature, layer) => {
-        layer.on({
-          mouseover: this.riverMouseOver.bind(this),
-          mouseout: this.riverMouseOut.bind(this),
-          click: this.riverClick.bind(this)
-        });
-      }
-    })
-      .addTo(this.map)
-      ;
-    this.layerControl.addOverlay(this.riverLayer, 'FWA Stream Network');
-    const loadHandler = (e) => {
-      const zoom = this.map.getZoom();
-      if (zoom >= 10) {
-        if (this.riverSource !== 1) {
-          this.loadJson(this.riverLayer, 'assets/QUES_2O_NET10M.geojson');
-          this.riverSource = 1;
-        }
-      } else if (zoom <= 9) {
-        if (this.riverSource !== 2) {
-          this.loadJson(this.riverLayer, 'assets/FWA_BC_200M.geojson');
-          this.riverSource = 2;
-        }
-      }
-    };
-    this.map.on('zoomend', loadHandler.bind(this));
-    loadHandler(null);
-  }
-
-  private riverStyle(river) {
-    let color = '#000000';
-    let weight = 1;
-    const highlightedRiver = this.riverService.highlightedRiver;
-    if (highlightedRiver) {
-      const riverId = river.properties.id;
-      const highlightedRiverId = highlightedRiver.properties.id;
-      if (highlightedRiverId === riverId) {
-        color = '#00FFFF';
-        weight = 10;
-      } else {
-        const highlightedRiverDescendentIds = highlightedRiver.properties.d;
-        if (highlightedRiverDescendentIds && highlightedRiverDescendentIds.includes(riverId)) {
-          color = '#FF0000';
-          weight = 5;
-        } else {
-          const highlightedRiverAncestorsIds = highlightedRiver.properties.a;
-          if (highlightedRiverAncestorsIds && highlightedRiverAncestorsIds.includes(riverId)) {
-            color = '#00FF00';
-            weight = 5;
-          }
-        }
-      }
-    }
-    return {
-      color: color,
-      weight: weight
-    };
-  }
-
-  private riverMouseOver(e) {
-    const layer = e.target;
-    if (this.riverLayer) {
-      const river = layer.feature;
-      if (river) {
-        this.riverService.highlightedRiver = river;
-      } else {
-        this.riverService.highlightedRiver = undefined;
-      }
-      this.riverLayer.setStyle(this.riverLayer.options.style);
-    }
-  }
-
-  private riverMouseOut(e) {
-    this.riverService.highlightedRiver = undefined;
-    if (this.riverLayer) {
-      this.riverLayer.setStyle(this.riverLayer.options.style);
-    }
-  }
-
-  private riverClick(e) {
-    const layer = e.target;
-    const river = layer.feature;
-    if (river) {
-      this.riverService.selectedRiver = river;
-    }
   }
 
   private emsStationInit() {
@@ -374,9 +280,8 @@ export class MapComponent implements OnInit {
     mtPolleyMarker.bindPopup('Mt. Polley Mine').openPopup();
   }
 
-  private loadJson(layer: GeoJSON, file: string) {
+  public loadJson(layer: GeoJSON, file: string) {
     this.http.get(file).toPromise().then(response => {
-      console.log(file);
       layer.clearLayers();
       const json = response.json();
       layer.addData(json);
