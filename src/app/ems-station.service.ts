@@ -110,16 +110,19 @@ export class EmsStationService {
       this.clearHighlighted();
       if (highlightedRiver) {
         const riverWatershedCode = highlightedRiver.feature.properties.fwawsc;
-        for (const watershedCode of this.riverService.highlightedWatershedCodes) {
-          let style;
-          if (watershedCode === riverWatershedCode) {
-            style = this.highlightedStyle;
-          } else {
-            style = this.highlightedStyleDescendent;
-          }
-          const stations = this.emsStationLayersByWatershedCode[watershedCode];
+        const riverLocalWatershedCode = highlightedRiver.feature.properties.localwsc;
+        for (const highlightedWatershedCode of Object.keys(this.riverService.highlightedWatershedCodes)) {
+          const highlightedLocalWatershedCode = this.riverService.highlightedWatershedCodes[highlightedWatershedCode];
+          const stations = this.emsStationLayersByWatershedCode[highlightedWatershedCode];
           if (stations) {
             for (const station of stations) {
+              const stationLocalWatershedCode = highlightedRiver.feature.properties.localwsc;
+              let style;
+              if (highlightedWatershedCode === riverWatershedCode && stationLocalWatershedCode === riverLocalWatershedCode) {
+                style = this.highlightedStyle;
+              } else if (highlightedWatershedCode <= riverWatershedCode && stationLocalWatershedCode < riverLocalWatershedCode) {
+                style = this.highlightedStyleDescendent;
+              }
               station.setStyle(style);
               this.highlightedEmsStations.push(station);
             }

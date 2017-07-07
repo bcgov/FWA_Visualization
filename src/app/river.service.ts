@@ -18,7 +18,7 @@ export class RiverService {
 
   private highlightedRivers: any[] = [];
 
-  highlightedWatershedCodes: string[] = [];
+  highlightedWatershedCodes: { [key: string]: string } = {};
 
   private highlightedStyle = {
     color: '#00FFFF',
@@ -102,7 +102,7 @@ export class RiverService {
       this.riversLayer.resetStyle(oldRiverLayer);
     }
     this.highlightedRivers = [];
-    this.highlightedWatershedCodes = [];
+    this.highlightedWatershedCodes = {};
     this.highlightedRiverChange.next(null);
   }
 
@@ -140,8 +140,8 @@ export class RiverService {
       riverLayer.setStyle(this.highlightedStyle);
       this.highlightedRivers.push(riverLayer);
       const watershedCode = riverLayer.feature.properties.fwawsc;
-      if (this.highlightedWatershedCodes.indexOf(watershedCode) === -1) {
-        this.highlightedWatershedCodes.push(watershedCode);
+      if (!this.highlightedWatershedCodes[watershedCode] ) {
+        this.highlightedWatershedCodes[watershedCode] = riverLayer.feature.properties.localwsc;
       }
       const river = riverLayer.feature;
       this.setHighlightedRiverStyles(river.properties.a, this.highlightedStyleAncestor, false);
@@ -163,8 +163,8 @@ export class RiverService {
         riverLayer.setStyle(style);
         if (descendent) {
           const watershedCode = riverLayer.feature.properties.fwawsc;
-          if (this.highlightedWatershedCodes.indexOf(watershedCode) === -1) {
-            this.highlightedWatershedCodes.push(watershedCode);
+          if (!this.highlightedWatershedCodes[watershedCode]) {
+            this.highlightedWatershedCodes[watershedCode] = riverLayer.feature.properties.localwsc;
           }
         }
       }
