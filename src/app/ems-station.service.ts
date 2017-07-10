@@ -93,7 +93,10 @@ export class EmsStationService {
       const zoom = map.getZoom();
       if (zoom >= 10) {
         if (this.emsStationSource !== 1) {
-          mapComponent.loadJson(this.emsStationsLayer, 'assets/EMS_Monitoring_Locations_QUES.geojson');
+          mapComponent.loadJson(
+            this.emsStationsLayer,
+            'https://rawgit.com/IanLaingBCGov/FWA_Visualization/FWA_EMS_Assets/EMS_Monitoring_Locations_QUES.geojson'
+          );
           this.emsStationSource = 1;
         }
       } else if (zoom <= 9) {

@@ -17,10 +17,10 @@ import {
   Popup
 } from 'leaflet';
 import * as L from 'leaflet';
-import { TiledMapLayer } from 'esri-leaflet';
+import {TiledMapLayer} from 'esri-leaflet';
 
-import { EmsStationService } from '../ems-station.service';
-import { RiverService } from '../river.service';
+import {EmsStationService} from '../ems-station.service';
+import {RiverService} from '../river.service';
 
 @Component({
   selector: 'app-map',
@@ -46,6 +46,12 @@ export class MapComponent implements OnInit {
   }
 
   ngOnInit() {
+    L.Icon.Default.imagePath = '/';
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: 'assets/marker-icon-2x.png',
+      iconUrl: 'assets/marker-icon.png',
+      shadowUrl: 'assets/marker-shadow.png',
+    });
     const map = this.map = new Map(this.mapElement.nativeElement, {
       minZoom: 1,
       maxZoom: 18,

@@ -20,11 +20,16 @@ export class RiverService {
 
   highlightedWatershedCodes: { [key: string]: string } = {};
 
+  private defaultStyle = {
+    color: 'black',
+    weight: 1
+  };
+
   private highlightedStyle = {
     color: '#00FFFF',
     weight: 5
   };
-
+  
   private highlightedStyleAncestor = {
     color: '#00FF00',
     weight: 5
@@ -50,11 +55,9 @@ export class RiverService {
 
   public init(mapComponent: MapComponent, map: Map) {
     this.riversLayer = L.geoJson([], {
-      style: {
-        color: 'Black',
-        weight: 1
-      },
+      style: this.defaultStyle,
       onEachFeature: (feature, layer) => {
+        layer.setStyle(this.defaultStyle);
         this.addRiver(layer);
       }
     }) //
@@ -71,13 +74,16 @@ export class RiverService {
       if (zoom >= 10) {
         if (this.riverSource !== 1) {
           this.clear();
-          mapComponent.loadJson(this.riversLayer, 'assets/QUES_2O_NET10M.geojson');
+          mapComponent.loadJson(
+            this.riversLayer,
+            'https://rawgit.com/IanLaingBCGov/FWA_Visualization/FWA_EMS_Assets/QUES_2O_NET10M.geojson'
+          );
           this.riverSource = 1;
         }
       } else if (zoom <= 9) {
         if (this.riverSource !== 2) {
           this.clear();
-          mapComponent.loadJson(this.riversLayer, 'assets/FWA_BC_200M.geojson');
+          mapComponent.loadJson(this.riversLayer, 'https://rawgit.com/IanLaingBCGov/FWA_Visualization/FWA_EMS_Assets/FWA_BC_200M.geojson');
           this.riverSource = 2;
         }
       }
