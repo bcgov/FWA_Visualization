@@ -71,7 +71,7 @@ export class EmsStationService {
       pointToLayer: function(feature, latlng) {
         return new CircleMarker(latlng, {
           radius: 6,
-          fillColor: '#ff7800',
+          fillColor: 'LightYellow',
           color: '#000',
           weight: 1,
           opacity: 1,
@@ -79,6 +79,7 @@ export class EmsStationService {
         });
       },
       onEachFeature: (feature, layer) => {
+        layer.bringToFront();
         this.addEmsStation(layer);
       }
     }).on({
@@ -119,13 +120,14 @@ export class EmsStationService {
           const stations = this.emsStationLayersByWatershedCode[highlightedWatershedCode];
           if (stations) {
             for (const station of stations) {
-              const stationLocalWatershedCode = highlightedRiver.feature.properties.localwsc;
+              const stationLocalWatershedCode = station.feature.properties.LOCAL_WATERSHED_CODE;
               let style;
               if (highlightedWatershedCode === riverWatershedCode && stationLocalWatershedCode === riverLocalWatershedCode) {
                 style = this.highlightedStyle;
               } else if (highlightedWatershedCode <= riverWatershedCode && stationLocalWatershedCode < riverLocalWatershedCode) {
                 style = this.highlightedStyleDescendent;
               }
+              station.bringToFront();
               station.setStyle(style);
               this.highlightedEmsStations.push(station);
             }
