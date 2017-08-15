@@ -17,10 +17,10 @@ import {
   Popup
 } from 'leaflet';
 import * as L from 'leaflet';
-import { TiledMapLayer } from 'esri-leaflet';
+import {TiledMapLayer} from 'esri-leaflet';
 
-import { EmsStationService } from '../ems-station.service';
-import { RiverService } from '../river.service';
+import {EmsStationService} from '../ems-station.service';
+import {RiverService} from '../river.service';
 
 @Component({
   selector: 'app-map',

@@ -12,3 +12,8 @@
 .layout-columns > div {
   flex: 3;
 }
+
+.main {
+  display: flex;
+  align-items: stretch;
+}
