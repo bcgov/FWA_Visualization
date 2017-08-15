@@ -46,6 +46,12 @@ export class MapComponent implements OnInit {
   }
 
   ngOnInit() {
+    L.Icon.Default.imagePath = '/';
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: 'assets/marker-icon-2x.png',
+      iconUrl: 'assets/marker-icon.png',
+      shadowUrl: 'assets/marker-shadow.png',
+    });
     const map = this.map = new Map(this.mapElement.nativeElement, {
       minZoom: 1,
       maxZoom: 18,

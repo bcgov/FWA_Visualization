@@ -1,10 +1,9 @@
 #map {
-  display: flex;
-  flex-grow: 1
+  flex: 1;
 }
- 
 :host {
-  display: flex;
-  flex-grow: 1;
+  flex: 1;
+  display:flex;
   align-items: stretch;
+  align-content: stretch;
 }

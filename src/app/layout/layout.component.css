@@ -9,11 +9,10 @@
   flex: 1;
 }
 
-.layout-columns > div {
+.layout-columns > .main {
   flex: 3;
-}
-
-.main {
   display: flex;
+  flex-direction: column;
   align-items: stretch;
+  align-content: stretch;
 }
