@@ -1,5 +1,5 @@
-import { Injectable } from '@angular/core';
-import { Subject } from 'rxjs/Subject';
+import {Injectable} from '@angular/core';
+import {Subject} from 'rxjs/Subject';
 
 import {
   CircleMarker,
@@ -9,14 +9,14 @@ import {
 } from 'leaflet';
 import * as L from 'leaflet';
 
-import { MapComponent } from './map/map.component';
-import { RiverService } from './river.service';
+import {MapComponent} from './map/map.component';
+import {RiverService} from './river.service';
 
 @Injectable()
 export class EmsStationService {
-  private emsStationLayerById: { [id: number]: any } = {};
+  private emsStationLayerById: {[id: number]: any} = {};
 
-  private emsStationLayersByWatershedCode: { [id: number]: any[] } = {};
+  private emsStationLayersByWatershedCode: {[id: number]: any[]} = {};
 
   highlightedEmsStation: any;
 
@@ -94,6 +94,7 @@ export class EmsStationService {
       const zoom = map.getZoom();
       if (zoom >= 10) {
         if (this.emsStationSource !== 1) {
+          this.clear();
           mapComponent.loadJson(
             this.emsStationsLayer,
             'https://rawgit.com/IanLaingBCGov/FWA_Visualization/FWA_EMS_Assets/EMS_Monitoring_Locations_QUES.geojson'
@@ -102,6 +103,7 @@ export class EmsStationService {
         }
       } else if (zoom <= 9) {
         if (this.emsStationSource !== 2) {
+          this.clear();
           this.emsStationsLayer.clearLayers();
           this.emsStationSource = 2;
         }
