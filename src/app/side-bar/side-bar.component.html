@@ -5,7 +5,7 @@
   </tab>
   <tab [disabled]="!river">
     <ng-template tabHeading>River</ng-template>
-    <div *ngIf="river">
+    <div *ngIf="river" id="riverTabContent">
       <div class="table-responsive">
         <table class="table table-bordered table-striped">
           <tr>
@@ -32,6 +32,23 @@
             <th>Downstream length</th>
             <td>{{(river.properties.dwnslen / 1000).toFixed(1)}} km</td>
           </tr>
+        </table>
+      </div>
+      <div *ngIf="emsLocations.stationCount() > 0" class="table-responsive">
+        <table class="table table-bordered table-striped table-condensed">
+          <caption>EMS Stations</caption>
+          <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+          </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let station of emsLocations.stations()" [ngClass]="{'onStream': emsLocations.onStream(station), 'downstream': emsLocations.downstream(station) }">
+              <td>{{station.feature.properties['MONITORING_LOCATION_ID']}}</td>
+              <td>{{station.feature.properties['MONITORING_LOCATION_NAME']}}</td>
+            </tr>
+          </tbody>
         </table>
       </div>
     </div>

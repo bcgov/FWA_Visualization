@@ -1,95 +1,80 @@
-import { Injectable } from '@angular/core';
-import { Subject } from 'rxjs/Subject';
+import {Injectable} from '@angular/core';
+import {Subject} from 'rxjs/Subject';
 
 import {
   CircleMarker,
-  GeoJSON,
-  Map
+  GeoJSON
 } from 'leaflet';
 import * as L from 'leaflet';
 
-import { MapComponent } from './map/map.component';
-
+import {FwaMapComponent} from './fwamap/fwa-map.component';
+import {MapService} from 'revolsys-angular-leaflet';
+import {RiverLocations} from './RiverLocations';
 @Injectable()
 export class RiverService {
-  private riverLayerById: { [id: number]: any } = {};
 
-  highlightedRiver: any;
+  private riverLayerById: {[id: number]: any} = {};
 
-  private highlightedRivers: any[] = [];
-
-  highlightedWatershedCodes: { [key: string]: string } = {};
-
-  private defaultStyle = {
-    color: 'black',
-    weight: 1
-  };
-
-  private highlightedStyle = {
-    color: '#00FFFF',
-    weight: 5
-  };
-  
-  private highlightedStyleAncestor = {
-    color: '#00FF00',
-    weight: 5
-  };
-
-  private highlightedStyleDescendent = {
-    color: '#FF0000',
-    weight: 5
-  };
+  highlightedRiverLocations = new RiverLocations(this);
 
   riversLayer: GeoJSON;
 
   riverSource = 0;
 
-  selectedRiver: string;
+  selectedRiverLocations = new RiverLocations(this);
 
-  public selectedRiverChange: Subject<any> = new Subject<any>();
-
-  public highlightedRiverChange: Subject<any> = new Subject<any>();
-
-  constructor() {
+  constructor(
+    private mapService: MapService
+  ) {
   }
 
-  public init(mapComponent: MapComponent, map: Map) {
-    this.riversLayer = L.geoJson([], {
-      style: this.defaultStyle,
-      onEachFeature: (feature, layer) => {
-        layer.setStyle(this.defaultStyle);
-        this.addRiver(layer);
-      }
-    }) //
-      .on({
-        mouseover: this.riverMouseOver.bind(this),
-        mouseout: this.riverMouseOut.bind(this),
-        click: this.riverClick.bind(this)
+  public init() {
+    this.mapService.withMap(map => {
+      map.on({
+        'click': e => this.selectedRiverLocations.setRiver(null)
+      });
+
+      this.riversLayer = L.geoJson([], {
+        style: (feature) => {
+          return this.riverStyle(feature);
+        },
+        onEachFeature: (feature, layer) => {
+          this.addRiver(layer);
+        }
       }) //
-      .setZIndex(1)
-      .addTo(map);
-    mapComponent.layerControl.addOverlay(this.riversLayer, 'FWA Stream Network');
-    const loadHandler = (e) => {
-      const zoom = map.getZoom();
-      if (zoom >= 10) {
-        if (this.riverSource !== 1) {
-          this.clear();
-          mapComponent.loadJson(
-            this.riversLayer,
-            'https://rawgit.com/IanLaingBCGov/FWA_Visualization/FWA_EMS_Assets/QUES_2O_NET10M.geojson'
-          );
-          this.riverSource = 1;
+        .on({
+          mouseover: this.riverMouseOver.bind(this),
+          mouseout: this.riverMouseOut.bind(this),
+          click: this.riverClick.bind(this)
+        }) //
+        .setZIndex(1)
+        .addTo(map);
+      this.mapService.addOverlayLayer(this.riversLayer, 'FWA Stream Network');
+      const loadHandler = (e) => {
+        const zoom = map.getZoom();
+        if (zoom >= 10) {
+          if (this.riverSource !== 1) {
+            this.clear();
+            this.mapService.loadJson(
+              this.riversLayer,
+              'https://rawgit.com/IanLaingBCGov/FWA_Visualization/FWA_EMS_Assets/QUES_2O_NET10M.geojson'
+            );
+            this.riverSource = 1;
+          }
+        } else if (zoom <= 9) {
+          if (this.riverSource !== 2) {
+            this.clear();
+            this.mapService.loadJson(
+              this.riversLayer,
+              'https://rawgit.com/IanLaingBCGov/FWA_Visualization/FWA_EMS_Assets/FWA_BC_200M.geojson'
+            );
+            this.riverSource = 2;
+          }
         }
-      } else if (zoom <= 9) {
-        if (this.riverSource !== 2) {
-          this.clear();
-          mapComponent.loadJson(this.riversLayer, 'https://rawgit.com/IanLaingBCGov/FWA_Visualization/FWA_EMS_Assets/FWA_BC_200M.geojson');
-          this.riverSource = 2;
-        }
-      }
-    };
-    map.on('zoomend', loadHandler.bind(this));
-    loadHandler(null);
+      };
+      map.on('zoomend', loadHandler.bind(this));
+      loadHandler(null);
+    });
   }
 
   public addRiver(riverLayer: any) {
@@ -99,18 +84,9 @@ export class RiverService {
 
   public clear() {
     this.riverLayerById = {};
-    this.clearHighlightedRiver();
+    this.highlightedRiverLocations.clear();
   }
 
-  private clearHighlightedRiver() {
-    this.highlightedRiver = null;
-    for (const oldRiverLayer of this.highlightedRivers) {
-      this.riversLayer.resetStyle(oldRiverLayer);
-    }
-    this.highlightedRivers = [];
-    this.highlightedWatershedCodes = {};
-    this.highlightedRiverChange.next(null);
-  }
 
   public getRiver(id: number): any {
     const riverLayer = this.getRiverLayer(id);
@@ -126,54 +102,58 @@ export class RiverService {
   }
 
   private riverClick(e) {
-    this.setSelectedRiver(e.layer.feature);
+    L.DomEvent.stopPropagation(e);
+    const riverLayer = e.layer;
+    this.selectedRiverLocations.setRiver(riverLayer);
   }
 
   private riverMouseOver(e) {
     const riverLayer = e.layer;
-    this.setHighlightedRiver(riverLayer);
+    this.highlightedRiverLocations.setRiver(riverLayer);
   }
 
   private riverMouseOut(e) {
-    this.clearHighlightedRiver();
+    this.highlightedRiverLocations.setRiver(null);
   }
 
-  public setHighlightedRiver(riverLayer: any) {
-    this.highlightedRiver = riverLayer;
-    this.clearHighlightedRiver();
-    if (riverLayer) {
-      this.highlightedRiver = riverLayer;
-      riverLayer.setStyle(this.highlightedStyle);
-      this.highlightedRivers.push(riverLayer);
-      const watershedCode = riverLayer.feature.properties.fwawsc;
-      if (!this.highlightedWatershedCodes[watershedCode] ) {
-        this.highlightedWatershedCodes[watershedCode] = riverLayer.feature.properties.localwsc;
-      }
-      const river = riverLayer.feature;
-      this.setHighlightedRiverStyles(river.properties.a, this.highlightedStyleAncestor, false);
-      this.setHighlightedRiverStyles(river.properties.d, this.highlightedStyleDescendent, true);
+  private riverStyle(feature): any {
+    const riverId = feature.properties.id;
+    if (this.highlightedRiverLocations.id === riverId) {
+      return {
+        color: '#00FFFF',
+        weight: 3
+      };
+    } else if (this.highlightedRiverLocations.upstreamIds.indexOf(riverId) !== -1) {
+      return {
+        color: '#00FF00',
+        weight: 3
+      };
+    } else if (this.highlightedRiverLocations.downstreamIds.indexOf(riverId) !== -1) {
+      return {
+        color: '#FF0000',
+        weight: 3
+      };
+    } else if (this.selectedRiverLocations.id === riverId) {
+      return {
+        color: '#00CED1',
+        weight: 5
+      };
+    } else if (this.selectedRiverLocations.upstreamIds.indexOf(riverId) !== -1) {
+      return {
+        color: '#32CD32',
+        weight: 5
+      };
+    } else if (this.selectedRiverLocations.downstreamIds.indexOf(riverId) !== -1) {
+      return {
+        color: '#B22222',
+        weight: 5
+      };
+    } else {
+      return {
+        color: 'black',
+        weight: 1
+      };
     }
-    this.highlightedRiverChange.next(riverLayer);
   }
 
-  public setSelectedRiver(selectedRiver: any) {
-    this.selectedRiver = selectedRiver;
-    this.selectedRiverChange.next(selectedRiver);
-  }
-
-  private setHighlightedRiverStyles(riverIds: number[], style: any, descendent: boolean) {
-    for (const riverId of riverIds) {
-      const riverLayer = this.getRiverLayer(riverId);
-      if (riverLayer) {
-        this.highlightedRivers.push(riverLayer);
-        riverLayer.setStyle(style);
-        if (descendent) {
-          const watershedCode = riverLayer.feature.properties.fwawsc;
-          if (!this.highlightedWatershedCodes[watershedCode]) {
-            this.highlightedWatershedCodes[watershedCode] = riverLayer.feature.properties.localwsc;
-          }
-        }
-      }
-    }
-  }
 }

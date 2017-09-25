@@ -1,5 +1,6 @@
 import {Injectable} from '@angular/core';
 import {Subject} from 'rxjs/Subject';
+import {Http} from '@angular/http';
 
 import {
   CircleMarker,
@@ -9,26 +10,20 @@ import {
 } from 'leaflet';
 import * as L from 'leaflet';
 
-import {MapComponent} from './map/map.component';
+import {MapService} from 'revolsys-angular-leaflet';
 import {RiverService} from './river.service';
+import {EmsStationLocations} from './EmsStationLocations';
 
 @Injectable()
 export class EmsStationService {
   private emsStationLayerById: {[id: number]: any} = {};
 
-  private emsStationLayersByWatershedCode: {[id: number]: any[]} = {};
+  public emsStationLayersByWatershedCode: {[id: string]: any[]} = {};
 
-  highlightedEmsStation: any;
+  highlightedEmsStationLocations: EmsStationLocations;
 
   highlightedEmsStations: any[] = [];
 
-  private highlightedStyle = {
-    fillColor: '#00FFFF'
-  };
-
-  private highlightedStyleDescendent = {
-    fillColor: '#FF0000'
-  };
 
   emsStationsLayer: GeoJSON;
 
@@ -38,7 +33,14 @@ export class EmsStationService {
 
   public selectedEmsStationChange: Subject<any> = new Subject<any>();
 
-  constructor(private riverService: RiverService) {
+  public selectedEmsStationLocations: EmsStationLocations;
+
+  constructor(
+    private mapService: MapService,
+    private riverService: RiverService
+  ) {
+    this.highlightedEmsStationLocations = new EmsStationLocations(this, riverService.highlightedRiverLocations);
+    this.selectedEmsStationLocations = new EmsStationLocations(this, riverService.selectedRiverLocations);
   }
 
   public addEmsStation(emsStationLayer: any) {
@@ -55,87 +57,69 @@ export class EmsStationService {
   public clear() {
     this.emsStationLayerById = {};
     this.emsStationLayersByWatershedCode = {};
-    this.clearHighlighted();
+    this.highlightedEmsStations.length = 0;
+    this.highlightedEmsStationLocations.clear();
+    this.selectedEmsStationLocations.clear();
   }
 
-  private clearHighlighted() {
-    this.highlightedEmsStation = null;
-    for (const oldEmsStationLayer of this.highlightedEmsStations) {
-      this.emsStationsLayer.resetStyle(oldEmsStationLayer);
-    }
-    this.highlightedEmsStations = [];
+  public getEmsStationLayer(id: number): any {
+    return this.emsStationLayerById[id];
   }
 
-  public init(mapComponent: MapComponent, map: Map) {
-    this.emsStationsLayer = L.geoJson([], {
-      pointToLayer: function(feature, latlng) {
-        return new CircleMarker(latlng, {
-          radius: 6,
-          fillColor: 'LightYellow',
-          color: '#000',
-          weight: 1,
-          opacity: 1,
-          fillOpacity: 0.8
-        });
-      },
-      onEachFeature: (feature, layer) => {
-        layer.bringToFront();
-        this.addEmsStation(layer);
-      }
-    }).on({
-      mouseover: this.emsStationMouseOver.bind(this),
-      mouseout: this.emsStationMouseOut.bind(this),
-      click: this.emsStationClick.bind(this)
-    })
-      .setZIndex(2)
-      .addTo(map);
-    mapComponent.layerControl.addOverlay(this.emsStationsLayer, 'Environmental Monitoring System Station');
-    const loadHandler = (e) => {
-      const zoom = map.getZoom();
-      if (zoom >= 10) {
-        if (this.emsStationSource !== 1) {
-          this.clear();
-          mapComponent.loadJson(
-            this.emsStationsLayer,
-            'https://rawgit.com/IanLaingBCGov/FWA_Visualization/FWA_EMS_Assets/EMS_Monitoring_Locations_QUES.geojson'
-          );
-          this.emsStationSource = 1;
+  public init() {
+    this.mapService.withMap(map => {
+      map.on({
+        'click': e => this.setSelectedEmsStation(null)
+      });
+      this.emsStationsLayer = L.geoJson([], {
+        pointToLayer: function(feature, latlng) {
+          return new CircleMarker(latlng, {
+            radius: 6,
+            fillColor: '#FFFFE0',
+            color: '#000',
+            weight: 1,
+            opacity: 1,
+            fillOpacity: 0.8
+          });
+        },
+        onEachFeature: (feature, layer) => {
+          layer.bringToFront();
+          this.addEmsStation(layer);
         }
-      } else if (zoom <= 9) {
-        if (this.emsStationSource !== 2) {
-          this.clear();
-          this.emsStationsLayer.clearLayers();
-          this.emsStationSource = 2;
-        }
-      }
-    };
-    map.on('zoomend', loadHandler.bind(this));
-    loadHandler(null);
-
-    this.riverService.highlightedRiverChange.subscribe((highlightedRiver) => {
-      this.clearHighlighted();
-      if (highlightedRiver) {
-        const riverWatershedCode = highlightedRiver.feature.properties.fwawsc;
-        const riverLocalWatershedCode = highlightedRiver.feature.properties.localwsc;
-        for (const highlightedWatershedCode of Object.keys(this.riverService.highlightedWatershedCodes)) {
-          const highlightedLocalWatershedCode = this.riverService.highlightedWatershedCodes[highlightedWatershedCode];
-          const stations = this.emsStationLayersByWatershedCode[highlightedWatershedCode];
-          if (stations) {
-            for (const station of stations) {
-              const stationLocalWatershedCode = station.feature.properties.LOCAL_WATERSHED_CODE;
-              let style;
-              if (highlightedWatershedCode === riverWatershedCode && stationLocalWatershedCode === riverLocalWatershedCode) {
-                style = this.highlightedStyle;
-              } else if (highlightedWatershedCode <= riverWatershedCode && stationLocalWatershedCode < riverLocalWatershedCode) {
-                style = this.highlightedStyleDescendent;
-              }
-              station.bringToFront();
-              station.setStyle(style);
-              this.highlightedEmsStations.push(station);
-            }
+      }).on({
+        mouseover: this.emsStationMouseOver.bind(this),
+        mouseout: this.emsStationMouseOut.bind(this),
+        click: this.emsStationClick.bind(this)
+      })
+        .setZIndex(2);
+      this.mapService.addOverlayLayer(this.emsStationsLayer, 'Environmental Monitoring System Station');
+      const loadHandler = (e) => {
+        const zoom = map.getZoom();
+        if (zoom >= 10) {
+          if (this.emsStationSource !== 1) {
+            this.clear();
+            this.mapService.loadJson(
+              this.emsStationsLayer,
+              'https://rawgit.com/IanLaingBCGov/FWA_Visualization/FWA_EMS_Assets/EMS_Monitoring_Locations_QUES.geojson'
+            );
+            this.emsStationSource = 1;
+          }
+        } else if (zoom <= 9) {
+          if (this.emsStationSource !== 2) {
+            this.clear();
+            this.emsStationsLayer.clearLayers();
+            this.emsStationSource = 2;
           }
         }
-      }
+      };
+      map.on('zoomend', loadHandler.bind(this));
+      loadHandler(null);
+    });
+    this.riverService.highlightedRiverLocations.subscribe((river) => {
+      this.highlightedEmsStationLocations.setEmsStationsForRiver(river);
+    });
+    this.riverService.selectedRiverLocations.subscribe((river) => {
+      this.selectedEmsStationLocations.setEmsStationsForRiver(river);
     });
   }
 
@@ -146,7 +130,54 @@ export class EmsStationService {
   }
 
   private emsStationClick(e) {
-    this.selectedEmsStation = e.layer.feature;
+    L.DomEvent.stopPropagation(e);
+    const emsStation = e.layer.feature;
+    this.setSelectedEmsStation(emsStation);
+  }
+
+  setSelectedEmsStation(emsStation: any) {
+    this.selectedEmsStation = emsStation;
+    console.log(emsStation);
     this.selectedEmsStationChange.next(this.selectedEmsStation);
   }
+
+  setStyle(stationLayer) {
+    const style = this.emsStationStyle(stationLayer);
+    stationLayer.setStyle(style);
+  }
+
+  private emsStationStyle(stationLayer): any {
+    const stationId = stationLayer.feature.properties['MONITORING_LOCATION_ID'];
+    if (this.highlightedEmsStationLocations.onStreamIds.indexOf(stationId) !== -1) {
+      return {
+        fillColor: '#00FFFF',
+        weight: 2
+      };
+    } else if (this.highlightedEmsStationLocations.downstreamIds.indexOf(stationId) !== -1) {
+      return {
+        fillColor: '#FF0000',
+        weight: 2
+      };
+    } else if (this.selectedEmsStationLocations.onStreamIds.indexOf(stationId) !== -1) {
+      return {
+        fillColor: '#00CED1',
+        weight: 2,
+        dashArray: null
+      };
+    } else if (this.selectedEmsStationLocations.downstreamIds.indexOf(stationId) !== -1) {
+      return {
+        fillColor: '#B22222',
+        weight: 2,
+        dashArray: null
+      };
+    } else {
+      return {
+        color: '#000000',
+        fillColor: '#FFFFE0',
+        weight: 1,
+        dashArray: null
+      };
+    }
+  }
+
 }
