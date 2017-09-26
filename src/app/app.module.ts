@@ -43,7 +43,7 @@ import {SideBarComponent} from './side-bar/side-bar.component';
     TypeaheadModule.forRoot(),
     BcgovPageModule.forRoot({
       basePath: '/',
-      title: 'FWA',
+      title: 'FWA Streams and EMS Stations',
       fullWidthContent: true
     }),
     RevolsysAngularLeafletModule

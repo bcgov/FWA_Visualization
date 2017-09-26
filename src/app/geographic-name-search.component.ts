@@ -19,7 +19,7 @@ import {
 
 @Component({
   selector: 'app-geographic-name-search',
-  template: `<leaflet-search-zoom name="Geographic Name" style="width: 300px; display: flex"></leaflet-search-zoom>`
+  template: `<leaflet-search-zoom label="Geographic Name" style="width: 300px; display: flex"></leaflet-search-zoom>`
 })
 export class GeographicNameSearchComponent implements AfterViewInit {
   @ViewChild(SearchZoomComponent)

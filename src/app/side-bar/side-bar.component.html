@@ -1,10 +1,10 @@
 <tabset  #tabs>
   <tab>
-    <ng-template tabHeading><i class="glyphicon glyphicon-question-sign" aria-hidden="true"></i> River Demo</ng-template>
+    <ng-template tabHeading><i class="glyphicon glyphicon-question-sign" aria-hidden="true"></i> Help</ng-template>
     <p>Click on a stream to view upstream/downstream info</p>
   </tab>
   <tab [disabled]="!river">
-    <ng-template tabHeading>River</ng-template>
+    <ng-template tabHeading>Stream</ng-template>
     <div *ngIf="river" id="riverTabContent">
       <div class="table-responsive">
         <table class="table table-bordered table-striped">
@@ -36,7 +36,7 @@
       </div>
       <div *ngIf="emsLocations.stationCount() > 0" class="table-responsive">
         <table class="table table-bordered table-striped table-condensed">
-          <caption>EMS Stations</caption>
+          <caption>EMS Station</caption>
           <thead>
           <tr>
             <th>ID</th>
