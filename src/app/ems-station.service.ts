@@ -137,7 +137,19 @@ export class EmsStationService {
 
   setSelectedEmsStation(emsStation: any) {
     this.selectedEmsStation = emsStation;
-    console.log(emsStation);
+
+    if (emsStation) {
+      const id = emsStation.properties.MONITORING_LOCATION_ID;
+
+      this.mapService.getWfsFeatures(
+        'https://openmaps.gov.bc.ca/geo/pub/wfs',
+        'pub:WHSE_ENVIRONMENTAL_MONITORING.EMS_MONITORING_LOCATIONS', {
+          'cql_filter': 'MONITORING_LOCATION_ID=' + id
+        }, (features) => {
+          console.log(features);
+        }
+      );
+    }
     this.selectedEmsStationChange.next(this.selectedEmsStation);
   }
 
@@ -150,30 +162,30 @@ export class EmsStationService {
     const stationId = stationLayer.feature.properties['MONITORING_LOCATION_ID'];
     if (this.highlightedEmsStationLocations.onStreamIds.indexOf(stationId) !== -1) {
       return {
-        fillColor: '#00FFFF',
+        fillColor: 'Aqua',
         weight: 2
       };
     } else if (this.highlightedEmsStationLocations.downstreamIds.indexOf(stationId) !== -1) {
       return {
-        fillColor: '#FF0000',
+        fillColor: 'Red',
         weight: 2
       };
     } else if (this.selectedEmsStationLocations.onStreamIds.indexOf(stationId) !== -1) {
       return {
-        fillColor: '#00CED1',
+        fillColor: 'DarkTurquoise',
         weight: 2,
         dashArray: null
       };
     } else if (this.selectedEmsStationLocations.downstreamIds.indexOf(stationId) !== -1) {
       return {
-        fillColor: '#B22222',
+        fillColor: 'FireBrick',
         weight: 2,
         dashArray: null
       };
     } else {
       return {
-        color: '#000000',
-        fillColor: '#FFFFE0',
+        color: 'Black',
+        fillColor: 'LightYellow',
         weight: 1,
         dashArray: null
       };

@@ -3,3 +3,10 @@ body {
   margin: 0;
   height: 100%;
 }
+.leaflet-container {
+  cursor: default !important;
+}
+.leaflet-interactive,
+.leaflet-clickable {
+  cursor: crosshair !important;
+}

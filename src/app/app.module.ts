@@ -1,6 +1,5 @@
 import 'leaflet/dist/images/marker-shadow.png';
 import 'leaflet/dist/images/marker-icon.png';
-
 import {BrowserModule} from '@angular/platform-browser';
 import {NgModule} from '@angular/core';
 import {FormsModule} from '@angular/forms';
@@ -17,6 +16,7 @@ import {GeographicNameSearchComponent} from './geographic-name-search.component'
 import {EmsStationService} from './ems-station.service';
 import {RiverService} from './river.service';
 import {FwaMapComponent} from './fwamap/fwa-map.component';
+import {FwaLegendComponent} from './fwamap/fwa-legend.component';
 import {
   MapService,
   RevolsysAngularLeafletModule
@@ -27,6 +27,7 @@ import {SideBarComponent} from './side-bar/side-bar.component';
 @NgModule({
   declarations: [
     FwaMapComponent,
+    FwaLegendComponent,
     LayoutComponent,
     SideBarComponent,
     GeographicNameSearchComponent

@@ -7,6 +7,7 @@
     <ng-template tabHeading>Stream</ng-template>
     <div *ngIf="river" id="riverTabContent">
       <div class="table-responsive">
+        <caption>Stream</caption>
         <table class="table table-bordered table-striped">
           <tr>
             <th>Name</th>
@@ -36,17 +37,25 @@
       </div>
       <div *ngIf="emsLocations.stationCount() > 0" class="table-responsive">
         <table class="table table-bordered table-striped table-condensed">
-          <caption>EMS Station</caption>
+          <caption>EMS Stations</caption>
           <thead>
           <tr>
             <th>ID</th>
+            <th>&nbsp;</th>
             <th>Name</th>
           </tr>
           </thead>
           <tbody>
             <tr *ngFor="let station of emsLocations.stations()" [ngClass]="{'onStream': emsLocations.onStream(station), 'downstream': emsLocations.downstream(station) }">
-              <td>{{station.feature.properties['MONITORING_LOCATION_ID']}}</td>
-              <td>{{station.feature.properties['MONITORING_LOCATION_NAME']}}</td>
+              <td>{{station['feature']['properties']['MONITORING_LOCATION_ID']}}</td>
+              <td><a
+                href="https://a100.gov.bc.ca/ext/ems/dataResultsCriteria.do?bean.p_ems_id={{station['feature']['properties']['MONITORING_LOCATION_ID']}}"
+                target="_report"
+                class="btn btn-primary btn-xs"
+                role="button"
+                title="Data Results"
+              ><i class="fa fa-table"></i></a></td>
+              <td>{{station['feature']['properties']['MONITORING_LOCATION_NAME']}}</td>
             </tr>
           </tbody>
         </table>
@@ -60,19 +69,25 @@
         <table class="table table-bordered table-striped">
           <tr>
             <th>ID</th>
-            <td>{{emsStation.properties.MONITORING_LOCATION_ID}}</td>
+            <td>{{emsStation['properties']['MONITORING_LOCATION_ID']}}</td>
           </tr>
           <tr>
             <th>Name</th>
-            <td>{{emsStation.properties.MONITORING_LOCATION_NAME}}</td>
+            <td>{{emsStation['properties']['MONITORING_LOCATION_NAME']}}</td>
           </tr>
           <tr>
             <th>Watershed Code</th>
-            <td>{{emsStation.properties.FWA_WATERSHED_CODE}}</td>
+            <td>{{emsStation['properties']['FWA_WATERSHED_CODE']}}</td>
           </tr>
           <tr>
-            <th>Local Watershed Code</th>
-            <td>{{emsStation.properties.LOCAL_WATERSHED_CODE}}</td>
+            <th>Actions</th>
+            <td><a
+      href="https://a100.gov.bc.ca/ext/ems/dataResultsCriteria.do?bean.p_ems_id={{emsStation['properties']['MONITORING_LOCATION_ID']}}"
+      target="_report"
+      class="btn btn-primary btn-xs"
+      role="button"
+      title="Data Results"
+    ><i class="fa fa-table"></i></a></td>
           </tr>
         </table>
       </div>

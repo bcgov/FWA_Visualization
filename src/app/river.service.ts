@@ -120,37 +120,37 @@ export class RiverService {
     const riverId = feature.properties.id;
     if (this.highlightedRiverLocations.id === riverId) {
       return {
-        color: '#00FFFF',
+        color: 'Aqua',
         weight: 3
       };
     } else if (this.highlightedRiverLocations.upstreamIds.indexOf(riverId) !== -1) {
       return {
-        color: '#00FF00',
+        color: 'Lime',
         weight: 3
       };
     } else if (this.highlightedRiverLocations.downstreamIds.indexOf(riverId) !== -1) {
       return {
-        color: '#FF0000',
+        color: 'Red',
         weight: 3
       };
     } else if (this.selectedRiverLocations.id === riverId) {
       return {
-        color: '#00CED1',
+        color: 'DarkTurquoise',
         weight: 5
       };
     } else if (this.selectedRiverLocations.upstreamIds.indexOf(riverId) !== -1) {
       return {
-        color: '#32CD32',
+        color: 'LimeGreen',
         weight: 5
       };
     } else if (this.selectedRiverLocations.downstreamIds.indexOf(riverId) !== -1) {
       return {
-        color: '#B22222',
+        color: 'FireBrick',
         weight: 5
       };
     } else {
       return {
-        color: 'black',
+        color: 'RoyalBlue',
         weight: 1
       };
     }

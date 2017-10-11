@@ -18,9 +18,9 @@ tabset {
 }
 
 tr.downstream td {
-  background-color: Pink;
+  color: #B22222;
 }
 
 tr.onStream td {
-  background-color: LightCyan;
+  color: #00CED1;
 }

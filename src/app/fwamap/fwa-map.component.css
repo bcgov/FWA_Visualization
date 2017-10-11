@@ -1,0 +1,8 @@
+:host {
+  flex: 1;
+  display:flex;
+}
+
+leaflet-map {
+  flex: 1;
+}

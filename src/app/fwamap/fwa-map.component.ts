@@ -25,22 +25,29 @@ import {RiverService} from '../river.service';
 @Component({
   selector: 'app-map',
   templateUrl: './fwa-map.component.html',
-  styles: [`
-:host {
-  flex: 1;
-  display:flex;
-}
-
-leaflet-map {
-  flex: 1;
-}
-  `]
+  styleUrls: ['./fwa-map.component.css']
 })
 export class FwaMapComponent implements AfterViewInit {
   bcArcGisRestUrl = 'https://maps.gov.bc.ca/arcgis/rest/services';
 
   bcWmsUrl = 'https://openmaps.gov.bc.ca/geo/pub';
 
+  @ViewChild('legend') legendElement: ElementRef;
+
+  legend = [
+    ['Stream', 'line', 'legend-stream'],
+    ['Selected Stream', 'line', 'legend-selected-stream'],
+    ['Selected Stream (Upstream)', 'line', 'legend-selected-stream-upstream'],
+    ['Selected Stream (Downstream)', 'line', 'legend-selected-stream-downstream'],
+    ['Higlighted Stream', 'line', 'legend-higlighted-stream'],
+    ['Higlighted Stream (Upstream)', 'line', 'legend-higlighted-stream-upstream'],
+    ['Higlighted Stream (Downstream)', 'line', 'legend-higlighted-stream-downstream'],
+    ['EMS Station', 'circle', 'legend-ems-station'],
+    ['Selected EMS Station', 'circle', 'legend-selected-ems-station'],
+    ['Selected EMS Station (Downstream)', 'circle', 'legend-selected-ems-station-downstream'],
+    ['Higlighted EMS Station', 'circle', 'legend-higlighted-ems-station'],
+    ['Higlighted EMS Station (Downstream)', 'circle', 'legend-higlighted-ems-station-downstream']
+  ];
   constructor(
     private http: Http,
     private riverService: RiverService,
