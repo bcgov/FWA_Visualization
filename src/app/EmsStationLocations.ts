@@ -9,11 +9,7 @@ export class EmsStationLocations {
 
   downstreamIds: string[] = [];
 
-  downstreamStations: any[] = [];
-
   onStreamIds: string[] = [];
-
-  onStreamStations: any[] = [];
 
 
   get stationsLayer(): GeoJSON {
@@ -32,20 +28,19 @@ export class EmsStationLocations {
   }
 
   private clearDo() {
-    const onStreamStations = this.onStreamStations.slice(0);
-    this.onStreamStations = [];
+    const onStreamIds = this.onStreamIds.slice(0);
     this.onStreamIds = [];
 
-    const downstreamStations = this.downstreamStations.slice(0);
-    this.downstreamStations = [];
+    const downstreamIds = this.downstreamIds.slice(0);
     this.downstreamIds = [];
 
-    for (const downstreamStation of downstreamStations) {
-      this.emsStationService.setStyle(downstreamStation);
-    }
-
-    for (const onStreamStation of onStreamStations) {
-      this.emsStationService.setStyle(onStreamStation);
+    for (const ids of [onStreamIds, downstreamIds]) {
+      for (const emsStationId of ids) {
+        const layer = this.emsStationService.emsStationLayerById[emsStationId];
+        if (layer) {
+          this.emsStationService.setStyle(layer);
+        }
+      }
     }
   }
 
@@ -53,26 +48,24 @@ export class EmsStationLocations {
     this.change.subscribe(callback);
   }
 
-  stations(): any[] {
-    if (this.onStreamStations.length === 0) {
-      return this.downstreamStations;
+  stationIds(): any[] {
+    if (this.onStreamIds.length === 0) {
+      return this.downstreamIds;
     } else {
-      return this.onStreamStations.concat(this.downstreamStations);
+      return this.onStreamIds.concat(this.downstreamIds);
     }
   }
 
-  onStream(station: any) {
-    const stationId = station.feature.properties['MONITORING_LOCATION_ID'];
-    return this.onStreamIds.indexOf(stationId) !== -1;
+  onStream(emsStationId: string) {
+    return this.onStreamIds.indexOf(emsStationId) !== -1;
   }
 
-  downstream(station: any) {
-    const stationId = station.feature.properties['MONITORING_LOCATION_ID'];
-    return this.downstreamIds.indexOf(stationId) !== -1;
+  downstream(emsStationId: string) {
+    return this.downstreamIds.indexOf(emsStationId) !== -1;
   }
 
   stationCount(): number {
-    return this.onStreamStations.length + this.downstreamStations.length;
+    return this.onStreamIds.length + this.downstreamIds.length;
   }
 
   setEmsStationsForRiver(river: any) {
@@ -83,20 +76,20 @@ export class EmsStationLocations {
       const watershedCodes = this.riverLocations.watershedCodes;
       for (const highlightedWatershedCode of Object.keys(watershedCodes)) {
         const highlightedLocalWatershedCode = watershedCodes[highlightedWatershedCode];
-        const stations = this.emsStationService.emsStationLayersByWatershedCode[highlightedWatershedCode];
-        if (stations) {
-          for (const station of stations) {
-            const id = station.feature.properties['MONITORING_LOCATION_ID'];
-            const stationLocalWatershedCode = station.feature.properties.LOCAL_WATERSHED_CODE;
+        const emsStationIds = this.emsStationService.emsStationIdsByWatershedCode[highlightedWatershedCode];
+        if (emsStationIds) {
+          for (const emsStationId of emsStationIds) {
+            const stationLocalWatershedCode = this.emsStationService.localWatershedCodeById[emsStationId];
             if (highlightedWatershedCode === riverWatershedCode && stationLocalWatershedCode === riverLocalWatershedCode) {
-              this.onStreamIds.push(id);
-              this.onStreamStations.push(station);
+              this.onStreamIds.push(emsStationId);
             } else if (highlightedWatershedCode <= riverWatershedCode && stationLocalWatershedCode < riverLocalWatershedCode) {
-              this.downstreamIds.push(id);
-              this.downstreamStations.push(station);
+              this.downstreamIds.push(emsStationId);
             }
-            station.bringToFront();
-            this.emsStationService.setStyle(station);
+            const layer = this.emsStationService.emsStationLayerById[emsStationId];
+            if (layer) {
+              layer.bringToFront();
+              this.emsStationService.setStyle(layer);
+            }
           }
         }
       }

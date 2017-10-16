@@ -52,7 +52,6 @@ const Legend = L.Control.extend({
     link.setAttribute('role', 'button');
     link.setAttribute('aria-label', link.title);
     L.DomEvent.disableClickPropagation(link);
-    console.log(container);
     this._legend = container.appendChild(this.options['legendElement']);
     if (L.Browser.touch) {
       L.DomEvent

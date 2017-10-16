@@ -46,16 +46,16 @@
           </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let station of emsLocations.stations()" [ngClass]="{'onStream': emsLocations.onStream(station), 'downstream': emsLocations.downstream(station) }">
-              <td>{{station['feature']['properties']['MONITORING_LOCATION_ID']}}</td>
+            <tr *ngFor="let emsStationId of emsLocations.stationIds()" [ngClass]="{'onStream': emsLocations.onStream(emsStationId), 'downstream': emsLocations.downstream(emsStationId) }">
+              <td>{{emsStationId}}</td>
               <td><a
-                href="https://a100.gov.bc.ca/ext/ems/dataResultsCriteria.do?bean.p_ems_id={{station['feature']['properties']['MONITORING_LOCATION_ID']}}"
+                href="https://a100.gov.bc.ca/ext/ems/dataResultsCriteria.do?bean.p_ems_id={{emsStationId}}"
                 target="_report"
                 class="btn btn-primary btn-xs"
                 role="button"
                 title="Data Results"
               ><i class="fa fa-table"></i></a></td>
-              <td>{{station['feature']['properties']['MONITORING_LOCATION_NAME']}}</td>
+              <td>{{emsStationName(emsStationId)}}</td>
             </tr>
           </tbody>
         </table>
@@ -77,7 +77,7 @@
           </tr>
           <tr>
             <th>Watershed Code</th>
-            <td>{{emsStation['properties']['FWA_WATERSHED_CODE']}}</td>
+            <td>{{emsStationWatershedCode(emsStation)}}</td>
           </tr>
           <tr>
             <th>Actions</th>

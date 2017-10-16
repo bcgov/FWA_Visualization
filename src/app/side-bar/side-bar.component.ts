@@ -19,17 +19,6 @@ export class SideBarComponent implements OnInit {
 
   @ViewChild('tabs') tabs: TabsetComponent;
 
-  get river(): any {
-    return this.riverService.selectedRiverLocations.riverFeature;
-  }
-
-  get emsStation(): any {
-    return this.emsStationService.selectedEmsStation;
-  }
-
-  get emsLocations(): any {
-    return this.emsStationService.selectedEmsStationLocations;
-  }
   constructor(private riverService: RiverService, private emsStationService: EmsStationService) {
     this.riverService.selectedRiverLocations.subscribe((selectedRiver) => {
       this.tabs.tabs[1].disabled = selectedRiver === null;
@@ -47,6 +36,31 @@ export class SideBarComponent implements OnInit {
         this.tabs.tabs[2].active = true;
       }
     });
+  }
+
+  get river(): any {
+    return this.riverService.selectedRiverLocations.riverFeature;
+  }
+
+  get emsStation(): any {
+    return this.emsStationService.selectedEmsStation;
+  }
+
+  emsStationId(emsStation: any): string {
+    return emsStation.properties['MONITORING_LOCATION_ID'];
+  }
+
+  emsStationName(emsStationId: any): string {
+    return this.emsStationService.nameById[emsStationId];
+  }
+
+  emsStationWatershedCode(emsStation: any): string {
+    const id = this.emsStationId(emsStation);
+    return this.emsStationService.watershedCodeById[id];
+  }
+
+  get emsLocations(): any {
+    return this.emsStationService.selectedEmsStationLocations;
   }
 
   ngOnInit() {
