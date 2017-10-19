@@ -73,16 +73,19 @@ export class EmsStationLocations {
     if (river) {
       const riverWatershedCode = river.feature.properties.fwawsc;
       const riverLocalWatershedCode = river.feature.properties.localwsc;
-      const watershedCodes = this.riverLocations.watershedCodes;
-      for (const highlightedWatershedCode of Object.keys(watershedCodes)) {
-        const highlightedLocalWatershedCode = watershedCodes[highlightedWatershedCode];
-        const emsStationIds = this.emsStationService.emsStationIdsByWatershedCode[highlightedWatershedCode];
+      const onStreamIds = this.emsStationService.emsStationIdsByLocalWatershedCode[riverLocalWatershedCode];
+      if (onStreamIds) {
+        this.onStreamIds = onStreamIds.slice(0);
+      }
+      for (const watershedCode of this.riverLocations.watershedCodes) {
+        const localWatershedCode = this.riverLocations.localWatershedCodeByWatershedCode[watershedCode];
+        const emsStationIds = this.emsStationService.emsStationIdsByWatershedCode[watershedCode];
         if (emsStationIds) {
           for (const emsStationId of emsStationIds) {
+            const stationWatershedCode = this.emsStationService.watershedCodeById[emsStationId];
             const stationLocalWatershedCode = this.emsStationService.localWatershedCodeById[emsStationId];
-            if (highlightedWatershedCode === riverWatershedCode && stationLocalWatershedCode === riverLocalWatershedCode) {
-              this.onStreamIds.push(emsStationId);
-            } else if (highlightedWatershedCode <= riverWatershedCode && stationLocalWatershedCode < riverLocalWatershedCode) {
+            if (this.onStreamIds.indexOf(emsStationId) !== -1) {
+            } else if (watershedCode <= riverWatershedCode && stationLocalWatershedCode < riverLocalWatershedCode) {
               this.downstreamIds.push(emsStationId);
             }
             const layer = this.emsStationService.emsStationLayerById[emsStationId];

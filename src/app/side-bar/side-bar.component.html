@@ -37,7 +37,7 @@
       </div>
       <div *ngIf="emsLocations.stationCount() > 0" class="table-responsive">
         <table class="table table-bordered table-striped table-condensed">
-          <caption>EMS Stations</caption>
+          <caption>EMS Stations <span class="badge">{{emsLocations.stationCount()}}</span></caption>
           <thead>
           <tr>
             <th>ID</th>
@@ -55,7 +55,7 @@
                 role="button"
                 title="Data Results"
               ><i class="fa fa-table"></i></a></td>
-              <td>{{emsStationName(emsStationId)}}</td>
+              <td>{{emsStationLocalWatershedCode(emsStationId)}}</td>
             </tr>
           </tbody>
         </table>
@@ -77,7 +77,11 @@
           </tr>
           <tr>
             <th>Watershed Code</th>
-            <td>{{emsStationWatershedCode(emsStation)}}</td>
+            <td>{{emsStationWatershedCode(emsStationId)}}</td>
+          </tr>
+          <tr>
+            <th>Local Watershed Code</th>
+            <td>{{emsStationLocalWatershedCode(emsStationId)}}</td>
           </tr>
           <tr>
             <th>Actions</th>

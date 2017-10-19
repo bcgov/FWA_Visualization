@@ -19,7 +19,10 @@ export class SideBarComponent implements OnInit {
 
   @ViewChild('tabs') tabs: TabsetComponent;
 
-  constructor(private riverService: RiverService, private emsStationService: EmsStationService) {
+  constructor(
+    public riverService: RiverService,
+    private emsStationService: EmsStationService
+  ) {
     this.riverService.selectedRiverLocations.subscribe((selectedRiver) => {
       this.tabs.tabs[1].disabled = selectedRiver === null;
       if (selectedRiver == null) {
@@ -46,17 +49,23 @@ export class SideBarComponent implements OnInit {
     return this.emsStationService.selectedEmsStation;
   }
 
-  emsStationId(emsStation: any): string {
-    return emsStation.properties['MONITORING_LOCATION_ID'];
+  get emsStationId(): string {
+    const emsStation = this.emsStation;
+    if (emsStation) {
+      return emsStation.properties['MONITORING_LOCATION_ID'];
+    }
   }
 
-  emsStationName(emsStationId: any): string {
+  emsStationName(emsStationId: string): string {
     return this.emsStationService.nameById[emsStationId];
   }
 
-  emsStationWatershedCode(emsStation: any): string {
-    const id = this.emsStationId(emsStation);
-    return this.emsStationService.watershedCodeById[id];
+  emsStationWatershedCode(emsStationId: string): string {
+    return this.emsStationService.watershedCodeById[emsStationId];
+  }
+
+  emsStationLocalWatershedCode(emsStationId: string): string {
+    return this.emsStationService.localWatershedCodeById[emsStationId];
   }
 
   get emsLocations(): any {

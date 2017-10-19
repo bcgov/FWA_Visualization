@@ -6,15 +6,17 @@ export class RiverLocations {
 
   private change: Subject<any> = new Subject<any>();
 
+  downstreamIds: number[] = [];
+
+  downstreamRivers: any[] = [];
+
+  localWatershedCodeByWatershedCode: {[id: string]: string} = {};
+
   river: any;
 
   upstreamIds: number[] = [];
 
-  downstreamIds: number[] = [];
-
   upstreamRivers: any[] = [];
-
-  downstreamRivers: any[] = [];
 
   watershedCodes: string[] = [];
 
@@ -59,13 +61,14 @@ export class RiverLocations {
   private clearDo() {
     if (this.river) {
       const river = this.river;
-      this.river = null;
-      const upstreamRivers = this.upstreamRivers.slice(0);
-      this.upstreamRivers = [];
       const downstreamRivers = this.downstreamRivers.slice(0);
-      this.downstreamRivers = [];
+      const upstreamRivers = this.upstreamRivers.slice(0);
       this.downstreamIds = [];
+      this.downstreamRivers = [];
+      this.localWatershedCodeByWatershedCode = {};
+      this.river = null;
       this.upstreamIds = [];
+      this.upstreamRivers = [];
       this.watershedCodes = [];
 
       this.riversLayer.resetStyle(river);
@@ -80,8 +83,8 @@ export class RiverLocations {
 
   private setLocalWatershedCode(river: any) {
     const watershedCode = river.properties.fwawsc;
-    if (!this.watershedCodes[watershedCode]) {
-      this.watershedCodes[watershedCode] = river.properties.localwsc;
+    if (!this.localWatershedCodeByWatershedCode[watershedCode]) {
+      this.localWatershedCodeByWatershedCode[watershedCode] = river.properties.localwsc;
     }
   }
 
@@ -92,6 +95,12 @@ export class RiverLocations {
         this.river = riverLayer;
         const river = riverLayer.feature;
         this.riversLayer.resetStyle(riverLayer);
+        let watershedCode = river.properties.fwawsc;
+        for (let index = watershedCode.lastIndexOf('-'); index !== -1; index = watershedCode.lastIndexOf('-')) {
+          this.watershedCodes.push(watershedCode);
+          watershedCode = watershedCode.substring(0, index);
+        }
+        this.watershedCodes.push(watershedCode);
         this.setLocalWatershedCode(river);
         this.upstreamIds = river.properties.a;
         this.setRiverRelations(this.upstreamRivers, this.upstreamIds, false);

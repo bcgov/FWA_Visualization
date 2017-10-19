@@ -1,7 +1,6 @@
 import {Injectable} from '@angular/core';
 import {Subject} from 'rxjs/Subject';
 import {Http} from '@angular/http';
-import * as Z from 'zlib';
 
 import {
   CircleMarker,
@@ -21,9 +20,11 @@ import {EmsStationLocations} from './EmsStationLocations';
 
 @Injectable()
 export class EmsStationService {
-  public emsStationLayerById: {[id: number]: any} = {};
+  public emsStationLayerById: {[key: number]: any} = {};
 
-  public emsStationIdsByWatershedCode: {[id: string]: string[]} = {};
+  public emsStationIdsByWatershedCode: {[key: string]: string[]} = {};
+
+  public emsStationIdsByLocalWatershedCode: {[key: string]: string[]} = {};
 
   emsStationSource = 0;
 
@@ -41,7 +42,7 @@ export class EmsStationService {
 
   public selectedEmsStationLocations: EmsStationLocations;
 
-  public watershedCodeById: {[id: string]: string} = {};
+  public watershedCodeById: {[key: string]: string} = {};
 
   constructor(
     private http: Http,
@@ -65,13 +66,18 @@ export class EmsStationService {
         this.nameById[id] = emsStation[1];
         this.watershedCodeById[id] = watershedCode;
         this.localWatershedCodeById[id] = localWatershedCode;
-        let ids = this.emsStationIdsByWatershedCode[watershedCode];
-        if (!ids) {
-          ids = this.emsStationIdsByWatershedCode[watershedCode] = [];
-        }
-        ids.push(id);
+        this.addToList(this.emsStationIdsByWatershedCode, watershedCode, id);
+        this.addToList(this.emsStationIdsByLocalWatershedCode, localWatershedCode, id);
       }
     });
+  }
+
+  private addToList(map: {[key: string]: string[]}, key: string, value: string) {
+    let values = map[key];
+    if (!values) {
+      values = map[key] = [];
+    }
+    values.push(value);
   }
 
   public addEmsStation(emsStationLayer: any) {
