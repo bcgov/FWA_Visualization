@@ -92,17 +92,17 @@ export class FwaLegendComponent implements AfterViewInit {
 
   legend = [
     ['Stream', 'line', 'legend-stream'],
-    ['Selected Stream', 'line', 'legend-selected-stream'],
-    ['Selected Stream (Upstream)', 'line', 'legend-selected-stream-upstream'],
-    ['Selected Stream (Downstream)', 'line', 'legend-selected-stream-downstream'],
     ['Higlighted Stream', 'line', 'legend-higlighted-stream'],
     ['Higlighted Stream (Upstream)', 'line', 'legend-higlighted-stream-upstream'],
     ['Higlighted Stream (Downstream)', 'line', 'legend-higlighted-stream-downstream'],
+    ['Selected Stream', 'line', 'legend-selected-stream'],
+    ['Selected Stream (Upstream)', 'line', 'legend-selected-stream-upstream'],
+    ['Selected Stream (Downstream)', 'line', 'legend-selected-stream-downstream'],
     ['EMS Station', 'circle', 'legend-ems-station'],
-    ['Selected EMS Station', 'circle', 'legend-selected-ems-station'],
-    ['Selected EMS Station (Downstream)', 'circle', 'legend-selected-ems-station-downstream'],
     ['Higlighted EMS Station', 'circle', 'legend-higlighted-ems-station'],
-    ['Higlighted EMS Station (Downstream)', 'circle', 'legend-higlighted-ems-station-downstream']
+    ['Higlighted EMS Station (Downstream)', 'circle', 'legend-higlighted-ems-station-downstream'],
+    ['Selected EMS Station', 'circle', 'legend-selected-ems-station'],
+    ['Selected EMS Station (Downstream)', 'circle', 'legend-selected-ems-station-downstream']
   ];
 
   legendControl: any;
