@@ -1,4 +1,5 @@
 import {Injectable} from '@angular/core';
+import {Http, Response} from '@angular/http';
 import {Subject} from 'rxjs/Subject';
 
 import {
@@ -21,9 +22,12 @@ export class RiverService {
 
   riverSource = 0;
 
+  loadIndex = 0;
+
   selectedRiverLocations = new RiverLocations(this);
 
   constructor(
+    private http: Http,
     private mapService: MapService
   ) {
   }
@@ -54,26 +58,34 @@ export class RiverService {
         const zoom = map.getZoom();
         if (zoom >= 10) {
           if (this.riverSource !== 1) {
-            this.clear();
-            this.mapService.loadJson(
-              this.riversLayer,
-              'https://rawgit.com/IanLaingBCGov/FWA_Visualization/FWA_EMS_Assets/QUES_2O_NET10M.geojson'
-            );
             this.riverSource = 1;
+            this.clear();
+            this.loadRivers('https://rawgit.com/IanLaingBCGov/FWA_Visualization/FWA_EMS_Assets/QUES_2O_NET10M.geojson');
           }
         } else if (zoom <= 9) {
           if (this.riverSource !== 2) {
-            this.clear();
-            this.mapService.loadJson(
-              this.riversLayer,
-              'https://rawgit.com/IanLaingBCGov/FWA_Visualization/FWA_EMS_Assets/FWA_BC_200M.geojson'
-            );
             this.riverSource = 2;
+            this.loadRivers('https://rawgit.com/IanLaingBCGov/FWA_Visualization/FWA_EMS_Assets/FWA_BC_200M.geojson');
           }
         }
       };
       map.on('zoomend', loadHandler.bind(this));
-      loadHandler(null);
+      //      loadHandler(null);
+    });
+  }
+
+
+
+  public loadRivers(file: string) {
+    const loadIndex = ++this.loadIndex;
+    this.http.get(file).toPromise().then(response => {
+      if (loadIndex === this.loadIndex) {
+        const layer = this.riversLayer;
+        this.clear();
+        layer.clearLayers();
+        const json = response.json();
+        layer.addData(json);
+      }
     });
   }
 
