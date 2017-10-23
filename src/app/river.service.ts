@@ -70,7 +70,6 @@ export class RiverService {
         }
       };
       map.on('zoomend', loadHandler.bind(this));
-      //      loadHandler(null);
     });
   }
 
@@ -90,7 +89,8 @@ export class RiverService {
   }
 
   public addRiver(riverLayer: any) {
-    const id = riverLayer.feature.properties.id;
+    const properties = riverLayer.feature.properties;
+    const id = properties.id;
     this.riverLayerById[id] = riverLayer;
   }
 
@@ -129,43 +129,48 @@ export class RiverService {
   }
 
   private riverStyle(feature): any {
-    const riverId = feature.properties.id;
-    if (this.highlightedRiverLocations.id === riverId) {
+    const highlightLocation = this.highlightedRiverLocations.getRiverLocation(feature);
+    if (highlightLocation === 0) {
       return {
         color: 'Aqua',
         weight: 3
       };
-    } else if (this.highlightedRiverLocations.upstreamIds.indexOf(riverId) !== -1) {
+    } else if (highlightLocation === 1) {
       return {
         color: 'Lime',
         weight: 3
       };
-    } else if (this.highlightedRiverLocations.downstreamIds.indexOf(riverId) !== -1) {
+    } else if (highlightLocation === -1) {
       return {
         color: 'Red',
         weight: 3
       };
-    } else if (this.selectedRiverLocations.id === riverId) {
-      return {
-        color: 'DarkTurquoise',
-        weight: 5
-      };
-    } else if (this.selectedRiverLocations.upstreamIds.indexOf(riverId) !== -1) {
-      return {
-        color: 'LimeGreen',
-        weight: 5
-      };
-    } else if (this.selectedRiverLocations.downstreamIds.indexOf(riverId) !== -1) {
-      return {
-        color: 'FireBrick',
-        weight: 5
-      };
     } else {
-      return {
-        color: 'RoyalBlue',
-        weight: 1
-      };
+      const selectLocation = this.selectedRiverLocations.getRiverLocation(feature);
+      if (selectLocation === 0) {
+        return {
+          color: 'DarkTurquoise',
+          weight: 5
+        };
+      } else if (selectLocation === 1) {
+        return {
+          color: 'LimeGreen',
+          weight: 5
+        };
+      } else if (selectLocation === -1) {
+        return {
+          color: 'FireBrick',
+          weight: 5
+        };
+      }
     }
+    return {
+      color: 'RoyalBlue',
+      weight: 1
+    };
   }
 
+  resetStyles() {
+    this.riversLayer.eachLayer(layer => this.riversLayer.resetStyle(layer));
+  }
 }

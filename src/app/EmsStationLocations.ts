@@ -76,26 +76,51 @@ export class EmsStationLocations {
       const onStreamIds = this.emsStationService.emsStationIdsByLocalWatershedCode[riverLocalWatershedCode];
       if (onStreamIds) {
         this.onStreamIds = onStreamIds.slice(0);
-      }
-      for (const watershedCode of this.riverLocations.watershedCodes) {
-        const localWatershedCode = this.riverLocations.localWatershedCodeByWatershedCode[watershedCode];
-        const emsStationIds = this.emsStationService.emsStationIdsByWatershedCode[watershedCode];
-        if (emsStationIds) {
-          for (const emsStationId of emsStationIds) {
-            const stationWatershedCode = this.emsStationService.watershedCodeById[emsStationId];
-            const stationLocalWatershedCode = this.emsStationService.localWatershedCodeById[emsStationId];
-            if (this.onStreamIds.indexOf(emsStationId) !== -1) {
-            } else if (watershedCode <= riverWatershedCode && stationLocalWatershedCode < riverLocalWatershedCode) {
-              this.downstreamIds.push(emsStationId);
-            }
-            const layer = this.emsStationService.emsStationLayerById[emsStationId];
-            if (layer) {
-              layer.bringToFront();
-              this.emsStationService.setStyle(layer);
-            }
+        for (const emsStationId of this.onStreamIds) {
+          const layer = this.emsStationService.emsStationLayerById[emsStationId];
+          if (layer) {
+            this.emsStationService.setStyle(layer);
           }
         }
       }
+      let localWatershedCode = riverLocalWatershedCode;
+      for (let index = localWatershedCode.lastIndexOf('-'); index !== -1; index = localWatershedCode.lastIndexOf('-')) {
+        const watershedCode = localWatershedCode.substring(0, index);
+        const emsStationIds = this.emsStationService.emsStationIdsByWatershedCode[watershedCode];
+        if (emsStationIds) {
+          for (const emsStationId of emsStationIds) {
+            const stationLocalWatershedCode = this.emsStationService.localWatershedCodeById[emsStationId];
+            if (stationLocalWatershedCode === riverLocalWatershedCode) {
+            } else if (stationLocalWatershedCode === watershedCode || stationLocalWatershedCode < localWatershedCode) {
+              this.downstreamIds.push(emsStationId);
+              const layer = this.emsStationService.emsStationLayerById[emsStationId];
+              if (layer) {
+                this.emsStationService.setStyle(layer);
+              }
+            }
+          }
+        }
+        localWatershedCode = watershedCode;
+      }
+      //      for (const watershedCode of this.riverLocations.watershedCodes) {
+      //        localWatershedCode = this.riverLocations.localWatershedCodeByWatershedCode[watershedCode];
+      //        const emsStationIds = this.emsStationService.emsStationIdsByWatershedCode[watershedCode];
+      //        if (emsStationIds) {
+      //          for (const emsStationId of emsStationIds) {
+      //            const stationWatershedCode = this.emsStationService.watershedCodeById[emsStationId];
+      //            const stationLocalWatershedCode = this.emsStationService.localWatershedCodeById[emsStationId];
+      //            if (this.onStreamIds.indexOf(emsStationId) !== -1) {
+      //            } else if (watershedCode <= riverWatershedCode && stationLocalWatershedCode < riverLocalWatershedCode) {
+      //              this.downstreamIds.push(emsStationId);
+      //            }
+      //            const layer = this.emsStationService.emsStationLayerById[emsStationId];
+      //            if (layer) {
+      //              layer.bringToFront();
+      //              this.emsStationService.setStyle(layer);
+      //            }
+      //          }
+      //        }
+      //      }
     }
   }
 

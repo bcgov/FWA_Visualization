@@ -18,7 +18,9 @@ export class RiverLocations {
 
   upstreamRivers: any[] = [];
 
-  watershedCodes: string[] = [];
+  watershedCode = '';
+
+  watershedCodeLocal = '';
 
   get id(): string {
     if (this.river) {
@@ -36,14 +38,6 @@ export class RiverLocations {
     }
   }
 
-  get watershedCode(): string {
-    if (this.river) {
-      return this.river.feature.properties.fwawsc;
-    } else {
-      return null;
-    }
-  }
-
   get riversLayer(): GeoJSON {
     return this.riverService.riversLayer;
   }
@@ -53,8 +47,47 @@ export class RiverLocations {
   ) {
   }
 
+  getRiverLocation(river: any): number {
+    if (this.watershedCode) {
+      const properties = river.properties;
+      if (this.riverService.riverSource === 1) {
+        const riverId = properties.id;
+        if (this.id === riverId) {
+          return 0;
+        } else if (this.upstreamIds.indexOf(riverId) !== -1) {
+          return 1;
+        } else if (this.downstreamIds.indexOf(riverId) !== -1) {
+          return -1;
+        }
+      } else {
+        const riverWatershedCode = properties.fwawsc;
+        const riverWatershedCodeLocal = properties.localwsc;
+        if (this.watershedCode === riverWatershedCode) {
+          if (riverWatershedCodeLocal === this.watershedCodeLocal) {
+            return 0;
+          } else if (riverWatershedCodeLocal < this.watershedCodeLocal) {
+            return -1;
+          } else {
+            return 1;
+          }
+        } else if (this.watershedCode.startsWith(riverWatershedCode + '-')) {
+          if (riverWatershedCodeLocal < this.watershedCodeLocal) {
+            return -1;
+          }
+        } else if (riverWatershedCode <= this.watershedCodeLocal || riverWatershedCode.startsWith(this.watershedCodeLocal + '-')) {
+        } else {
+          if (riverWatershedCode.startsWith(this.watershedCode + '-') && riverWatershedCodeLocal > this.watershedCodeLocal) {
+            return 1;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
   public clear() {
     this.clearDo();
+    this.riverService.resetStyles();
     this.change.next(null);
   }
 
@@ -69,15 +102,8 @@ export class RiverLocations {
       this.river = null;
       this.upstreamIds = [];
       this.upstreamRivers = [];
-      this.watershedCodes = [];
-
-      this.riversLayer.resetStyle(river);
-      for (const upstreamRiver of upstreamRivers) {
-        this.riversLayer.resetStyle(upstreamRiver);
-      }
-      for (const downstreamRiver of downstreamRivers) {
-        this.riversLayer.resetStyle(downstreamRiver);
-      }
+      this.watershedCode = '';
+      this.watershedCodeLocal = '';
     }
   }
 
@@ -94,19 +120,18 @@ export class RiverLocations {
       if (riverLayer) {
         this.river = riverLayer;
         const river = riverLayer.feature;
-        this.riversLayer.resetStyle(riverLayer);
-        let watershedCode = river.properties.fwawsc;
-        for (let index = watershedCode.lastIndexOf('-'); index !== -1; index = watershedCode.lastIndexOf('-')) {
-          this.watershedCodes.push(watershedCode);
-          watershedCode = watershedCode.substring(0, index);
-        }
-        this.watershedCodes.push(watershedCode);
+        this.watershedCode = river.properties.fwawsc;
+        this.watershedCodeLocal = river.properties.localwsc;
+
         this.setLocalWatershedCode(river);
-        this.upstreamIds = river.properties.a;
-        this.setRiverRelations(this.upstreamRivers, this.upstreamIds, false);
-        this.downstreamIds = river.properties.d;
-        this.setRiverRelations(this.downstreamRivers, this.downstreamIds, true);
+        if (this.riverService.riverSource === 1) {
+          this.upstreamIds = river.properties.a;
+          this.setRiverRelations(this.upstreamRivers, this.upstreamIds, false);
+          this.downstreamIds = river.properties.d;
+          this.setRiverRelations(this.downstreamRivers, this.downstreamIds, true);
+        }
       }
+      this.riverService.resetStyles();
       this.change.next(riverLayer);
     }
   }
@@ -123,7 +148,6 @@ export class RiverLocations {
         if (downstream) {
           this.setLocalWatershedCode(riverLayer.feature);
         }
-        this.riversLayer.resetStyle(riverLayer);
       }
     }
   }
