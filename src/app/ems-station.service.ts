@@ -97,7 +97,7 @@ export class EmsStationService {
         'click': e => this.setSelectedEmsStation(null)
       });
       const emsStationsLayerNew = new WfsLayer({
-        url: 'http://openmaps.gov.bc.ca/geo/pub/WHSE_ENVIRONMENTAL_MONITORING.EMS_MONITORING_LOCN_TYPES_SVW/ows',
+        url: 'https://openmaps.gov.bc.ca/geo/pub/WHSE_ENVIRONMENTAL_MONITORING.EMS_MONITORING_LOCN_TYPES_SVW/ows',
         typeName: 'WHSE_ENVIRONMENTAL_MONITORING.EMS_MONITORING_LOCN_TYPES_SVW',
         minZoom: 10,
         pointToLayer: (feature, latlng) => {
