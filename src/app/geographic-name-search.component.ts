@@ -4,13 +4,11 @@ import {
   ElementRef,
   ViewChild
 } from '@angular/core';
-
 import {
-  Headers,
-  Jsonp,
-  Response,
-  URLSearchParams
-} from '@angular/http';
+  HttpClient,
+  HttpParams
+} from '@angular/common/http';
+
 import {
   MapService,
   SearchResult,
@@ -29,7 +27,7 @@ export class GeographicNameSearchComponent implements AfterViewInit {
   public query: string;
 
   public constructor(
-    private http: Jsonp
+    private http: HttpClient
   ) {
   }
 
@@ -40,23 +38,23 @@ export class GeographicNameSearchComponent implements AfterViewInit {
   }
 
   search(query): Promise<SearchResult[]> {
-    const params = new URLSearchParams();
-    params.set('name', query);
-    params.set('minScore', '0.7');
-    params.set('itemsPerPage', '10');
-    params.set('outputSRS', '4326');
-    params.set('embed', '0');
-    params.set('outputStyle', 'detail');
-    params.set('outputFormat', 'jsonx');
-    params.set('callback', 'JSONP_CALLBACK');
-    return this.http.get(
-      'https://apps.gov.bc.ca/pub/bcgnws/names/soundlike',
-      {search: params}
-    ).toPromise().then(response => {
+    const params = new HttpParams() //
+      .set('name', query) //
+      .set('minScore', '0.7') //
+      .set('itemsPerPage', '10') //
+      .set('outputSRS', '4326') //
+      .set('embed', '0') //
+      .set('outputStyle', 'detail') //
+      .set('outputFormat', 'jsonx') //
+      .set('callback', 'JSONP_CALLBACK') //
+      .toString();
+    return this.http.jsonp(
+      `https://apps.gov.bc.ca/pub/bcgnws/names/soundlike?${params}`,
+      'jsonp12345'
+    ).toPromise().then(data => {
       const matches: SearchResult[] = [];
       const found = false;
-      const json = response.json();
-      const features = json.features;
+      const features = data['features'];
       if (features) {
         for (const feature of features) {
           const props = feature.properties;

@@ -1,6 +1,6 @@
 import {Injectable} from '@angular/core';
 import {Subject} from 'rxjs/Subject';
-import {Http} from '@angular/http';
+import {HttpClient} from '@angular/common/http';
 
 import {
   CircleMarker,
@@ -45,14 +45,14 @@ export class EmsStationService {
   public watershedCodeById: {[key: string]: string} = {};
 
   constructor(
-    private http: Http,
+    private http: HttpClient,
     private mapService: MapService,
     private riverService: RiverService
   ) {
     this.highlightedEmsStationLocations = new EmsStationLocations(this, riverService.highlightedRiverLocations);
     this.selectedEmsStationLocations = new EmsStationLocations(this, riverService.selectedRiverLocations);
-    this.http.get('https://rawgit.com/IanLaingBCGov/FWA_Visualization/FWA_EMS_Assets/ems_station.json').toPromise().then(response => {
-      for (const emsStation of response.json()) {
+    this.http.get<any[]>('https://rawgit.com/IanLaingBCGov/FWA_Visualization/FWA_EMS_Assets/ems_station.json').subscribe(response => {
+      for (const emsStation of response) {
         const id = emsStation[0];
         const watershedCode = emsStation[2];
         let localWatershedCode = emsStation[3];

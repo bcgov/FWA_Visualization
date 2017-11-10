@@ -5,10 +5,7 @@ import {
   AfterViewInit,
   ViewChild
 } from '@angular/core';
-import {
-  Http,
-  Response
-} from '@angular/http';
+import {HttpClient} from '@angular/common/http';
 
 import {
   CircleMarker,
@@ -49,7 +46,7 @@ export class FwaMapComponent implements AfterViewInit {
     ['Higlighted EMS Station (Downstream)', 'circle', 'legend-higlighted-ems-station-downstream']
   ];
   constructor(
-    private http: Http,
+    private http: HttpClient,
     private riverService: RiverService,
     private emsStationService: EmsStationService,
     private mapService: MapService

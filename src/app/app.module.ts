@@ -3,8 +3,7 @@ import 'leaflet/dist/images/marker-icon.png';
 import {BrowserModule} from '@angular/platform-browser';
 import {NgModule} from '@angular/core';
 import {FormsModule} from '@angular/forms';
-import {HttpModule, JsonpModule} from '@angular/http';
-
+import {HttpClientModule, HttpClientJsonpModule} from '@angular/common/http';
 import {AppRoutingModule} from './app-routing.module';
 
 import {BcgovPageModule} from 'revolsys-bcgov-angular-page';
@@ -35,8 +34,8 @@ import {SideBarComponent} from './side-bar/side-bar.component';
   imports: [
     BrowserModule,
     FormsModule,
-    HttpModule,
-    JsonpModule,
+    HttpClientModule,
+    HttpClientJsonpModule,
 
     AppRoutingModule,
 

@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {Http, Response} from '@angular/http';
+import {HttpClient} from '@angular/common/http';
 import {Subject} from 'rxjs/Subject';
 
 import {
@@ -27,7 +27,7 @@ export class RiverService {
   selectedRiverLocations = new RiverLocations(this);
 
   constructor(
-    private http: Http,
+    private http: HttpClient,
     private mapService: MapService
   ) {
   }
@@ -82,8 +82,7 @@ export class RiverService {
         const layer = this.riversLayer;
         this.clear();
         layer.clearLayers();
-        const json = response.json();
-        layer.addData(json);
+        layer.addData(response);
       }
     });
   }
