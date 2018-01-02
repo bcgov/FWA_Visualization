@@ -69,6 +69,7 @@ export class RiverService {
           }
         }
       };
+      map.on('moveend', loadHandler.bind(this));
       map.on('zoomend', loadHandler.bind(this));
     });
   }
