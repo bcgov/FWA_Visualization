@@ -23,12 +23,14 @@ import com.revolsys.util.Dates;
 import com.revolsys.util.Debug;
 
 public class FwaTiles {
+  private static final int COORDINATE_SYSTEM_ID = 3857;
+
   private static final String LOCAL_WATERSHED_CODE = "LOCAL_WATERSHED_CODE";
 
   private static final String LINEAR_FEATURE_ID = "LINEAR_FEATURE_ID";
 
-  private static final GeometryFactory GEOMETRY_FACTORY = GeometryFactory.fixed2d(3005, 1000.0,
-    1000.0);
+  private static final GeometryFactory GEOMETRY_FACTORY = GeometryFactory
+    .fixed2d(COORDINATE_SYSTEM_ID, 1000.0, 1000.0);
 
   private static final String WATERSHED_CODE = "WATERSHED_CODE";
 
@@ -49,7 +51,8 @@ public class FwaTiles {
       .setGeometryFactory(GEOMETRY_FACTORY)//
       .getRecordDefinition();
 
-  private final Path fwaPath = Paths.get("/Data/FWA/tiles/" + TILE_SIZE);
+  private final Path fwaPath = Paths.get(
+    "/Volumes/bcgovdata/fwa/tiles/" + GEOMETRY_FACTORY.getCoordinateSystemId() + "/" + TILE_SIZE);
 
   public void closeWriters() {
     for (final IntHashMap<RecordWriter> writersByTileX : this.writersByTileYAndX.values()) {
@@ -114,7 +117,8 @@ public class FwaTiles {
       }
     }
 
-    final LineString line = record.getGeometry().convertAxisCount(2);
+    final LineString sourceLine = record.getGeometry();
+    final LineString line = GEOMETRY_FACTORY.lineString(sourceLine);
     stream.setGeometryValue(line);
     return stream;
   }
