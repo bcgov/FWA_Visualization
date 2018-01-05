@@ -121,7 +121,6 @@ export class RiverLocations {
         }, results => {
           const result = results['features'][0];
           if (result && this.river == riverLayer) {
-            console.log(result);
             Object.assign(properties, result['properties']);
           }
         });

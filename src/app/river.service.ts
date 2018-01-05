@@ -144,7 +144,7 @@ export class RiverService {
 
         const tileX = tileId[0];
         const tileY = tileId[1];
-        this.http.get(`http://bcgovdata.revolsys.com:8885/fwa/tiles/3857/10000/${tileX}/${tileY}.tsv`, {
+        this.http.get(`https://bcgov.revolsys.com:8445/fwa/tiles/3857/10000/${tileX}/${tileY}.tsv`, {
           responseType: 'text'
         })//
           .subscribe(text => {
