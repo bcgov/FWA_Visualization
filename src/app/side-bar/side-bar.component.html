@@ -11,7 +11,7 @@
         <table class="table table-bordered table-striped">
           <tr>
             <th>Name</th>
-            <td>{{river.properties.name}}</td>
+            <td>{{river.properties.name}}{{river.properties.GNIS_NAME}}</td>
           </tr>
           <tr>
             <th>Watershed Code</th>
@@ -21,15 +21,19 @@
             <th>Local Code</th>
             <td>{{river.properties.localwsc}}</td>
           </tr>
-          <tr>
+          <tr *ngIf="river.properties.FEATURE_LENGTH_M">
+            <th>Segment length</th>
+            <td>{{(river.properties.FEATURE_LENGTH_M / 1000).toFixed(1)}} km</td>
+          </tr>
+          <tr *ngIf="river.properties.seglen">
             <th>Segment length</th>
             <td>{{(river.properties.seglen / 1000).toFixed(1)}} km</td>
           </tr>
-          <tr>
+          <tr *ngIf="river.properties.upslen">
             <th>Upstream length</th>
             <td>{{(river.properties.upslen / 1000).toFixed(1)}} km</td>
           </tr>
-          <tr>
+          <tr *ngIf="river.properties.upslen">
             <th>Downstream length</th>
             <td>{{(river.properties.dwnslen / 1000).toFixed(1)}} km</td>
           </tr>
