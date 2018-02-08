@@ -2,11 +2,13 @@ package ca.bc.gov.fwa.convert;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import ca.bc.gov.fwa.FwaController;
-
 import com.revolsys.collection.map.IntHashMap;
+import com.revolsys.collection.map.Maps;
 import com.revolsys.datatype.DataTypes;
 import com.revolsys.geometry.model.BoundingBox;
 import com.revolsys.geometry.model.GeometryFactory;
@@ -15,32 +17,28 @@ import com.revolsys.io.PathName;
 import com.revolsys.record.Record;
 import com.revolsys.record.io.RecordReader;
 import com.revolsys.record.io.RecordWriter;
+import com.revolsys.record.io.format.csv.CsvRecordWriter;
 import com.revolsys.record.schema.RecordDefinition;
 import com.revolsys.record.schema.RecordDefinitionBuilder;
-import com.revolsys.record.schema.RecordStore;
-import com.revolsys.record.schema.RecordStoreSchema;
 import com.revolsys.util.Dates;
-import com.revolsys.util.Debug;
+import com.revolsys.util.count.LabelCountMap;
 
-public class FwaTiles {
+public class FwaTiles implements FwaConstants {
   private static final int COORDINATE_SYSTEM_ID = 3857;
-
-  private static final String LOCAL_WATERSHED_CODE = "LOCAL_WATERSHED_CODE";
-
-  private static final String LINEAR_FEATURE_ID = "LINEAR_FEATURE_ID";
 
   private static final GeometryFactory GEOMETRY_FACTORY = GeometryFactory
     .fixed2d(COORDINATE_SYSTEM_ID, 1000.0, 1000.0);
 
-  private static final String WATERSHED_CODE = "WATERSHED_CODE";
-
-  private static final int TILE_SIZE = 10000;
+  private static final Map<Integer, Integer> SEGMENT_LENGTH_BY_TILE_SIZE = Maps
+    .<Integer, Integer> buildHash() //
+    .add(1000000, 10000) //
+    .getMap();
 
   public static void main(final String[] args) {
     new FwaTiles().run();
   }
 
-  private final IntHashMap<IntHashMap<RecordWriter>> writersByTileYAndX = new IntHashMap<>();
+  private final IntHashMap<IntHashMap<IntHashMap<CsvRecordWriter>>> writersByTileSizeYAndX = new IntHashMap<>();
 
   private final RecordDefinition streamRecordDefinition = new RecordDefinitionBuilder(
     PathName.newPathName("/FWA_STREAM_TILE")) //
@@ -51,114 +49,131 @@ public class FwaTiles {
       .setGeometryFactory(GEOMETRY_FACTORY)//
       .getRecordDefinition();
 
-  private final Path fwaPath = Paths.get(
-    "/Volumes/bcgovdata/fwa/tiles/" + GEOMETRY_FACTORY.getCoordinateSystemId() + "/" + TILE_SIZE);
+  private final Path fwaPath = Paths
+    .get("/Data/FWA/tiles/" + GEOMETRY_FACTORY.getCoordinateSystemId());
 
   public void closeWriters() {
-    for (final IntHashMap<RecordWriter> writersByTileX : this.writersByTileYAndX.values()) {
-      for (final RecordWriter writer : writersByTileX.values()) {
-        writer.close();
+    for (final IntHashMap<IntHashMap<CsvRecordWriter>> writersByTileSize : this.writersByTileSizeYAndX
+      .values()) {
+      for (final IntHashMap<CsvRecordWriter> writersByTileX : writersByTileSize.values()) {
+        for (final RecordWriter writer : writersByTileX.values()) {
+          writer.close();
+        }
       }
     }
-    this.writersByTileYAndX.clear();
+    this.writersByTileSizeYAndX.clear();
   }
 
-  private RecordStore getStreamNetworkRecordStore() {
-    return FwaController.getFileRecordStore("/Data/FWA/FWA_STREAM_NETWORKS_SP.gdb");
-  }
-
-  public RecordWriter getWriter(final int tileX, final int tileY) {
-    IntHashMap<RecordWriter> writersByTileX = this.writersByTileYAndX.get(tileY);
-    if (writersByTileX == null) {
-      writersByTileX = new IntHashMap<>();
-      this.writersByTileYAndX.put(tileY, writersByTileX);
-      final Path rowPath = this.fwaPath.resolve(Integer.toString(tileY));
+  public CsvRecordWriter getWriter(final int tileSize, final int tileX, final int tileY) {
+    IntHashMap<IntHashMap<CsvRecordWriter>> writersByTileSize = this.writersByTileSizeYAndX
+      .get(tileSize);
+    if (writersByTileSize == null) {
+      writersByTileSize = new IntHashMap<>();
+      this.writersByTileSizeYAndX.put(tileSize, writersByTileSize);
+    }
+    IntHashMap<CsvRecordWriter> writersByTileY = writersByTileSize.get(tileX);
+    if (writersByTileY == null) {
+      writersByTileY = new IntHashMap<>();
+      writersByTileSize.put(tileX, writersByTileY);
+      final Path rowPath = this.fwaPath //
+        .resolve(Integer.toString(tileSize)) //
+        .resolve(Integer.toString(tileX));
       com.revolsys.io.file.Paths.createDirectories(rowPath);
     }
 
-    RecordWriter writer = writersByTileX.get(tileX);
+    CsvRecordWriter writer = writersByTileY.get(tileY);
     if (writer == null) {
-      final Path rowPath = this.fwaPath.resolve(Integer.toString(tileY));
-      final Path tilePath = rowPath.resolve(tileX + ".tsv");
-      writer = RecordWriter.newRecordWriter(this.streamRecordDefinition, tilePath);
-      writersByTileX.put(tileX, writer);
+      final Path tilePath = this.fwaPath //
+        .resolve(Integer.toString(tileSize)) //
+        .resolve(Integer.toString(tileX)) //
+        .resolve(tileY + ".tsv");
+      writer = (CsvRecordWriter)RecordWriter.newRecordWriter(this.streamRecordDefinition, tilePath);
+      writersByTileY.put(tileY, writer);
     }
     return writer;
   }
 
-  private Record newStream(final Record record) {
-
+  private Record newStream(final Record record, final int tileSize) {
     final Record stream = this.streamRecordDefinition.newRecord();
     stream.setValue(LINEAR_FEATURE_ID, record, LINEAR_FEATURE_ID);
-
-    String watershedCode = record.getString(FwaController.FWA_WATERSHED_CODE);
-    if (watershedCode == null) {
-      watershedCode = "";
-    } else {
-      watershedCode = watershedCode.replaceAll("(-000000)+$", "");
-      stream.setValue(WATERSHED_CODE, watershedCode.intern());
-    }
-
-    String localWatershedCode = record.getString(LOCAL_WATERSHED_CODE);
-    if (localWatershedCode != null) {
-      localWatershedCode = localWatershedCode.replaceAll("(-000000)+$", "");
-      if (localWatershedCode.startsWith(watershedCode)) {
-        final int length = watershedCode.length();
-        if (length == localWatershedCode.length()) {
-          localWatershedCode = "";
-        } else {
-          localWatershedCode = localWatershedCode.substring(length + 1);
-        }
-      } else {
-        Debug.noOp();
-      }
-      if (localWatershedCode.length() > 0) {
-        stream.setValue(LOCAL_WATERSHED_CODE, localWatershedCode.intern());
-      }
-    }
-
+    stream.setValue(WATERSHED_CODE, record, FWA_WATERSHED_CODE);
+    stream.setValue(LOCAL_WATERSHED_CODE, record, LOCAL_WATERSHED_CODE);
     final LineString sourceLine = record.getGeometry();
-    final LineString line = GEOMETRY_FACTORY.lineString(sourceLine);
+    LineString line = sourceLine.convertGeometry(GEOMETRY_FACTORY);
+    final int segmentLength = SEGMENT_LENGTH_BY_TILE_SIZE.getOrDefault(tileSize, 0);
+    if (segmentLength > 0) {
+      if (line.getVertexCount() > 2) {
+        final double length = line.getLength();
+        if (length < segmentLength) {
+          final int lastVertexIndex = line.getLastVertexIndex();
+          line = GEOMETRY_FACTORY.lineString(2, line.getX(0), line.getY(0),
+            line.getX(lastVertexIndex), line.getY(lastVertexIndex));
+        }
+      }
+    }
     stream.setGeometryValue(line);
     return stream;
+  }
+
+  public void pauseWriters() {
+    for (final IntHashMap<IntHashMap<CsvRecordWriter>> writersByTileSize : this.writersByTileSizeYAndX
+      .values()) {
+      for (final IntHashMap<CsvRecordWriter> writersByTileX : writersByTileSize.values()) {
+        for (final CsvRecordWriter writer : writersByTileX.values()) {
+          writer.pause();
+        }
+      }
+    }
   }
 
   private void readRecords() {
     long startTime = System.currentTimeMillis();
     final AtomicInteger count = new AtomicInteger();
-
+    final LabelCountMap counts = new LabelCountMap();
     try (
-      final RecordStore recordStore = getStreamNetworkRecordStore()) {
-      final RecordStoreSchema rootSchema = recordStore.getRootSchema();
-      for (final RecordDefinition recordDefinition : rootSchema.getRecordDefinitions()) {
-        final PathName pathName = recordDefinition.getPathName();
-        if (!pathName.getName().startsWith("_")) {
-          try (
-            RecordReader reader = recordStore.getRecords(pathName)) {
-            for (final Record record : reader) {
-              if (count.incrementAndGet() % 50000 == 0) {
-                System.out.println(count);
-              }
-              final Record tileRecord = newStream(record);
-              final LineString line = tileRecord.getGeometry();
-              final BoundingBox boundingBox = line.getBoundingBox();
-              final int minX = (int)Math.floor(boundingBox.getMinX() / TILE_SIZE) * TILE_SIZE;
-              final int minY = (int)Math.floor(boundingBox.getMinY() / TILE_SIZE) * TILE_SIZE;
-              final double maxX = boundingBox.getMaxX();
-              final double maxY = boundingBox.getMaxY();
-              for (int tileY = minY; tileY < maxY; tileY += TILE_SIZE) {
-                for (int tileX = minX; tileX < maxX; tileX += TILE_SIZE) {
-                  final RecordWriter writer = getWriter(tileX, tileY);
-                  writer.write(tileRecord);
-                }
-              }
+      RecordReader reader = RecordReader.newRecordReader(FwaToTsv.FWA_STREAM_NETWORK_TSV)) {
+      for (final Record record : reader) {
+        final int streamOrder = record.getInteger(STREAM_ORDER);
+        counts.addCount(Integer.toString(streamOrder));
+        final int i = count.incrementAndGet();
+        if (i % 50000 == 0) {
+          pauseWriters();
+        }
+        final List<Integer> tileSizes = new ArrayList<>();
+        if (streamOrder >= 7) {
+          tileSizes.add(1000000);
+        }
+        if (streamOrder >= 6) {
+          tileSizes.add(500000);
+        }
+        if (streamOrder >= 4) {
+          tileSizes.add(100000);
+        }
+        if (streamOrder >= 2) {
+          tileSizes.add(10000);
+        }
+        tileSizes.add(5000);
+        for (final int tileSize : tileSizes) {
+          final Record tileRecord = newStream(record, tileSize);
+          final LineString line = tileRecord.getGeometry();
+          final BoundingBox boundingBox = line.getBoundingBox();
+          final int minX = (int)Math.floor(boundingBox.getMinX() / tileSize) * tileSize;
+          final int minY = (int)Math.floor(boundingBox.getMinY() / tileSize) * tileSize;
+          final double maxX = boundingBox.getMaxX();
+          final double maxY = boundingBox.getMaxY();
+          for (int tileY = minY; tileY < maxY; tileY += tileSize) {
+            for (int tileX = minX; tileX < maxX; tileX += tileSize) {
+              final RecordWriter writer = getWriter(tileSize, tileX, tileY);
+              writer.write(tileRecord);
             }
           }
         }
       }
-      closeWriters();
     }
+    closeWriters();
+    System.out.println(counts.toTsv(STREAM_ORDER, "Counts"));
     startTime = Dates.printEllapsedTime("read: " + count, startTime);
+
   }
 
   private void run() {

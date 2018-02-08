@@ -87,7 +87,7 @@ public class FwaRouteToNetwork {
     final RecordGraph graph = new RecordGraph();
 
     try (
-      final RecordStore recordStore = FwaController.getFwaRecordStore();
+      final RecordStore recordStore = FwaController.getBcgwRecordStore();
       Transaction transaction = recordStore.newTransaction();
       RecordReader reader = recordStore.getRecords(query);) {
       for (final Record record : reader) {

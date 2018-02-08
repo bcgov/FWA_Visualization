@@ -16,7 +16,7 @@ public class FwaController {
     return getFileRecordStore("/Data/FWA/FWA_BC.gdb");
   }
 
-  public static RecordStore getFwaRecordStore() {
+  public static RecordStore getBcgwRecordStore() {
     return getRecordStore("jdbc:postgresql://localhost/bcgw", "pxaustin", "Tdnmatm1");
   }
 
@@ -34,5 +34,8 @@ public class FwaController {
 
   public static final String FWA_ROUTES_SP = "/WHSE_BASEMAPPING/FWA_ROUTES_SP";
   public static final String FWA_WATERSHED_CODE = "FWA_WATERSHED_CODE";
+  public static RecordStore getFwaRecordStore() {
+    return getRecordStore("jdbc:postgresql://localhost/fwa", "pxaustin", "Tdnmatm1");
+  }
 
 }

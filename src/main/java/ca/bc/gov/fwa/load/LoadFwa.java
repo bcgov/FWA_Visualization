@@ -22,7 +22,7 @@ public class LoadFwa {
   private void run() {
     try (
       RecordStore fgdbRecordStore = FwaController.getFwaFgdbRecordStore();
-      final RecordStore jdbcRecordStore = FwaController.getFwaRecordStore();) {
+      final RecordStore jdbcRecordStore = FwaController.getBcgwRecordStore();) {
       try (
         Transaction transaction = jdbcRecordStore.newTransaction()) {
         Records.copyRecords(fgdbRecordStore, "/FWA_ROUTES_SP", jdbcRecordStore,
