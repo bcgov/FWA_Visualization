@@ -63,7 +63,7 @@ export class FwaMapComponent implements AfterViewInit {
 
     this.riverService.init();
     this.emsStationService.init();
-    this.tempLayersInit();
+    //    this.tempLayersInit();
   }
 
   private tempLayersInit() {

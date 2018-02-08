@@ -14,20 +14,22 @@ import {MapService} from 'revolsys-angular-leaflet';
 import {RiverLocations} from './RiverLocations';
 @Injectable()
 export class RiverService {
-
-  private riverLayerById: {[id: number]: any} = {};
+  //        private readonly baseUrl = 'https://bcgov.revolsys.com:8445/fwa/tiles/3857';
+  private readonly baseUrl = '/tiles/3857';
 
   highlightedRiverLocations = new RiverLocations(this);
 
-  riversLayer: GeoJSON;
+  loadIndex = 0;
+
+  private riverLayerById: {[id: number]: any} = {};
 
   riverSource = 0;
 
-  loadIndex = 0;
+  riversLayer: GeoJSON;
 
   selectedRiverLocations = new RiverLocations(this);
 
-  static tileSize = 10000;
+  private tileSize = -1;
 
   private tileRecordsById: {[id: string]: {[riverId: string]: any}} = {};
 
@@ -85,18 +87,31 @@ export class RiverService {
       this.mapService.addOverlayLayer(this.riversLayer, 'FWA Stream Network');
       const loadHandler = (e) => {
         const zoom = map.getZoom();
-        if (zoom >= 10) {
-          this.riverSource = 1;
-          this.loadTiles(map);
-        } else if (zoom <= 9) {
-          if (this.riverSource !== 2) {
-            this.riverSource = 2;
-            this.loadRivers('https://rawgit.com/IanLaingBCGov/FWA_Visualization/FWA_EMS_Assets/FWA_BC_200M.geojson');
+        console.log(zoom);
+        let tileSize = 0;
+        if (zoom >= 11) {
+          tileSize = 5000;
+        } else if (zoom >= 10) {
+          tileSize = 10000;
+        } else if (zoom >= 7) {
+          tileSize = 500000;
+        } else {
+          tileSize = 0;
+        }
+        if (tileSize != this.tileSize) {
+          this.tileSize = tileSize;
+          this.tileRecordsById = {};
+          if (tileSize == 0) {
+            this.loadRiversTsv(`${this.baseUrl}/bc.tsv`);
           }
+        }
+        if (tileSize > 0) {
+          this.loadTiles(map, tileSize);
         }
       };
       map.on('moveend', loadHandler.bind(this));
       map.on('zoomend', loadHandler.bind(this));
+      loadHandler(1);
     });
   }
 
@@ -104,7 +119,7 @@ export class RiverService {
 
   private loadRivers(file: string) {
     const loadIndex = ++this.loadIndex;
-    this.http.get(file).toPromise().then(response => {
+    this.http.get(file).subscribe(response => {
       if (loadIndex === this.loadIndex) {
         const layer = this.riversLayer;
         this.clear();
@@ -114,19 +129,36 @@ export class RiverService {
     });
   }
 
+  private loadRiversTsv(file: string) {
+    console.log(file);
+    const loadIndex = ++this.loadIndex;
+    this.http.get(file, {
+      responseType: 'text'
+    }).subscribe(text => {
+      if (loadIndex === this.loadIndex) {
+        const layer = this.riversLayer;
+        this.clear();
+        layer.clearLayers();
+        this.parseTsv(text, record => {
+          layer.addData(record);
+        });
+      }
+    });
+  }
 
-  private loadTiles(map: Map) {
+
+  private loadTiles(map: Map, tileSize: number) {
     const loadIndex = ++this.loadIndex;
     const layer = this.riversLayer;
     const min = L.CRS.EPSG3857.project(map.getBounds().getSouthWest());
     const max = L.CRS.EPSG3857.project(map.getBounds().getNorthEast());
-    const tileMinX = Math.floor(min.x / RiverService.tileSize) * RiverService.tileSize;
-    const tileMinY = Math.floor(min.y / RiverService.tileSize) * RiverService.tileSize;
-    const tileMaxX = Math.ceil(max.x / RiverService.tileSize) * RiverService.tileSize;
-    const tileMaxY = Math.ceil(max.y / RiverService.tileSize) * RiverService.tileSize;
+    const tileMinX = Math.floor(min.x / tileSize) * tileSize;
+    const tileMinY = Math.floor(min.y / tileSize) * tileSize;
+    const tileMaxX = Math.ceil(max.x / tileSize) * tileSize;
+    const tileMaxY = Math.ceil(max.y / tileSize) * tileSize;
     const tileIds = [];
-    for (let tileY = tileMinY; tileY < tileMaxY; tileY += RiverService.tileSize) {
-      for (let tileX = tileMinX; tileX < tileMaxX; tileX += RiverService.tileSize) {
+    for (let tileY = tileMinY; tileY < tileMaxY; tileY += tileSize) {
+      for (let tileX = tileMinX; tileX < tileMaxX; tileX += tileSize) {
         tileIds.push([tileX, tileY]);
       }
     }
@@ -144,54 +176,19 @@ export class RiverService {
 
         const tileX = tileId[0];
         const tileY = tileId[1];
-        this.http.get(`https://bcgov.revolsys.com:8445/fwa/tiles/3857/10000/${tileX}/${tileY}.tsv`, {
+        this.http.get(`${this.baseUrl}/${tileSize}/${tileX}/${tileY}.tsv`, {
           responseType: 'text'
         })//
           .subscribe(text => {
             if (loadIndex === this.loadIndex) {
-
-              let first = true;
-              for (const line of text.split('\n')) {
-                if (first) {
-                  first = false;
-                } else if (line) {
-                  const fields = line.split('\t');
-                  const id = fields[0];
-                  const watershedCode = fields[1].replace(/"/g, '');
-                  let localWatershedCode = fields[2].replace(/"/g, '');
-                  if (localWatershedCode) {
-                    localWatershedCode = watershedCode + '-' + localWatershedCode;
-                  } else {
-                    localWatershedCode = watershedCode
-                  }
-                  const lineString = fields[3].replace(/"/g, '');
-
-                  const coordinates = [];
-                  for (const point of lineString.substring(21, lineString.length - 1).split(',')) {
-                    const parts = point.split(' ');
-                    const x = Number(parts[0]);
-                    const y = Number(parts[1]);
-                    const latLng = L.CRS.EPSG3857.unproject(L.point(x, y));
-                    coordinates.push([latLng.lng, latLng.lat]);
-                  }
-                  const record = {
-                    'type': 'Feature',
-                    'geometry': {
-                      'type': 'LineString',
-                      'coordinates': coordinates
-                    },
-                    'properties': {
-                      'id': id,
-                      'fwawsc': watershedCode,
-                      'localwsc': localWatershedCode
-                    }
-                  };
+              this.parseTsv(text, record => {
+                const id = record.properties.id;
+                if (!(id in recordsById)) {
                   tileRecordsById[id] = record;
-                  if (!recordsById[id]) {
-                    layer.addData(record);
-                  }
+                  recordsById[id] = record;
+                  layer.addData(record);
                 }
-              }
+              });
             }
           }, err => {
           });
@@ -199,6 +196,7 @@ export class RiverService {
       }
       Object.assign(recordsById, tileRecordsById);
     }
+    console.log(Object.keys(recordsById).length);
     layer.addData({
       'type': 'FeatureCollection',
       'features': Object.keys(recordsById).map(key => recordsById[key])
@@ -207,6 +205,47 @@ export class RiverService {
     this.tileRecordsById = tileRecordsById;
   }
 
+  private parseTsv(text: string, callback: (record: any) => void) {
+    let first = true;
+    for (const line of text.split('\n')) {
+      if (first) {
+        first = false;
+      } else if (line) {
+        const fields = line.split('\t');
+        const id = fields[0];
+        const watershedCode = fields[1].replace(/"/g, '');
+        let localWatershedCode = fields[2].replace(/"/g, '');
+        if (localWatershedCode) {
+          localWatershedCode = watershedCode + '-' + localWatershedCode;
+        } else {
+          localWatershedCode = watershedCode
+        }
+        const lineString = fields[3].replace(/"/g, '');
+
+        const coordinates = [];
+        for (const point of lineString.substring(21, lineString.length - 1).split(',')) {
+          const parts = point.split(' ');
+          const x = Number(parts[0]);
+          const y = Number(parts[1]);
+          const latLng = L.CRS.EPSG3857.unproject(L.point(x, y));
+          coordinates.push([latLng.lng, latLng.lat]);
+        }
+        const record = {
+          'type': 'Feature',
+          'geometry': {
+            'type': 'LineString',
+            'coordinates': coordinates
+          },
+          'properties': {
+            'id': id,
+            'fwawsc': watershedCode,
+            'localwsc': localWatershedCode
+          }
+        };
+        callback(record);
+      }
+    }
+  }
   resetStyles() {
     this.riversLayer.eachLayer(layer => this.riversLayer.resetStyle(layer));
   }
