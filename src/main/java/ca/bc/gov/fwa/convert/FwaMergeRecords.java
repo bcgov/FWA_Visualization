@@ -45,7 +45,21 @@ public class FwaMergeRecords implements FwaConstants {
     PathName.newPathName("/FWA_STREAM_TILE")) //
       .addField(LINEAR_FEATURE_ID, DataTypes.INTEGER) //
       .addField(FWA_WATERSHED_CODE, DataTypes.STRING, 143) //
-      .addField(LOCAL_WATERSHED_CODE, DataTypes.STRING, 143) //
+      .addField(MIN_LOCAL_WATERSHED_CODE, DataTypes.STRING, 143) //
+      .addField(MAX_LOCAL_WATERSHED_CODE, DataTypes.STRING, 143) //
+      .addField(DataTypes.LINE_STRING) //
+      .setGeometryFactory(GEOMETRY_FACTORY)//
+      .getRecordDefinition();
+
+  private final RecordDefinition graphRecordDefinition = new RecordDefinitionBuilder(
+    PathName.newPathName("/FWA_GRAPH")) //
+      .addField(LINEAR_FEATURE_ID, DataTypes.INTEGER) //
+      .addField(BLUE_LINE_KEY, DataTypes.INTEGER) //
+      .addField(GNIS_ID, DataTypes.INTEGER) //
+      .addField(GNIS_NAME, DataTypes.INTEGER) //
+      .addField(FWA_WATERSHED_CODE, DataTypes.STRING, 143) //
+      .addField(MIN_LOCAL_WATERSHED_CODE, DataTypes.STRING, 143) //
+      .addField(MAX_LOCAL_WATERSHED_CODE, DataTypes.STRING, 143) //
       .addField(DataTypes.LINE_STRING) //
       .setGeometryFactory(GEOMETRY_FACTORY)//
       .getRecordDefinition();
@@ -54,6 +68,16 @@ public class FwaMergeRecords implements FwaConstants {
     .get("/Data/FWA/tiles/" + GEOMETRY_FACTORY.getCoordinateSystemId());
 
   private final RecordStore recordStore = FwaController.getFwaRecordStore();
+
+  private boolean canMerge(final String code1, final String code2) {
+    if (code1 == null) {
+      return code2 == null;
+    } else if (code2 == null) {
+      return false;
+    } else {
+      return code1.length() == code2.length();
+    }
+  }
 
   public void closeWriters() {
     for (final IntHashMap<IntHashMap<CsvRecordWriter>> writersByTileSize : this.writersByTileSizeYAndX
@@ -100,7 +124,16 @@ public class FwaMergeRecords implements FwaConstants {
   }
 
   private void writeMergedRecords(final Path file, final Iterable<Record> records) {
-    final RecordGraph graph = new RecordGraph(records);
+    final RecordGraph graph = new RecordGraph();
+    for (final Record record : records) {
+      final String localWatershedCode = record.getString(LOCAL_WATERSHED_CODE);
+
+      final Record graphRecord = this.graphRecordDefinition.newRecord(record);
+      graphRecord.setGeometryValue(record);
+      graphRecord.setValue(MIN_LOCAL_WATERSHED_CODE, localWatershedCode);
+      graphRecord.setValue(MAX_LOCAL_WATERSHED_CODE, localWatershedCode);
+      graph.addEdge(graphRecord);
+    }
     final int recordCount = graph.getEdgeCount();
     graph.forEachNode(node -> {
       if (node.getEdgeCount() == 2) {
@@ -110,9 +143,35 @@ public class FwaMergeRecords implements FwaConstants {
           final Edge<Record> edge2 = edges.get(1);
           final Record record1 = edge1.getObject();
           final Record record2 = edge2.getObject();
+          if (record1.equalValue(LINEAR_FEATURE_ID, 706608153)
+            || record2.equalValue(LINEAR_FEATURE_ID, 706608153)) {
+            Debug.noOp();
+          }
           if (record1.equalValue(record2, FWA_WATERSHED_CODE)) {
             if (record1.equalValue(record2, BLUE_LINE_KEY)) {
-              graph.merge(node, edge1, edge2);
+              final String minLocalWatershedCode1 = record1.getString(MIN_LOCAL_WATERSHED_CODE);
+              final String minLocalWatershedCode2 = record2.getString(MIN_LOCAL_WATERSHED_CODE);
+              if (canMerge(minLocalWatershedCode1, minLocalWatershedCode2)) {
+                final String maxLocalWatershedCode1 = record1.getString(MAX_LOCAL_WATERSHED_CODE);
+                final String maxLocalWatershedCode2 = record2.getString(MAX_LOCAL_WATERSHED_CODE);
+                if (canMerge(maxLocalWatershedCode1, maxLocalWatershedCode2)) {
+                  final Edge<Record> newEdge = graph.merge(node, edge1, edge2);
+                  final Record newRecord = newEdge.getObject();
+                  if (minLocalWatershedCode1 == null || minLocalWatershedCode2 == null) {
+                  } else if (minLocalWatershedCode1.compareTo(minLocalWatershedCode2) < 0) {
+                    newRecord.setValue(MIN_LOCAL_WATERSHED_CODE, minLocalWatershedCode1);
+                  } else {
+                    newRecord.setValue(MIN_LOCAL_WATERSHED_CODE, minLocalWatershedCode2);
+                  }
+
+                  if (maxLocalWatershedCode1 == null || maxLocalWatershedCode2 == null) {
+                  } else if (maxLocalWatershedCode1.compareTo(maxLocalWatershedCode2) > 0) {
+                    newRecord.setValue(MAX_LOCAL_WATERSHED_CODE, maxLocalWatershedCode1);
+                  } else {
+                    newRecord.setValue(MAX_LOCAL_WATERSHED_CODE, maxLocalWatershedCode2);
+                  }
+                }
+              }
             } else {
               Debug.noOp();
             }
@@ -123,7 +182,8 @@ public class FwaMergeRecords implements FwaConstants {
     System.out.println(recordCount);
 
     try (
-      RecordWriter writer = RecordWriter.newRecordWriter(this.fwaVisualizationRecordDefinition, file)) {
+      RecordWriter writer = RecordWriter.newRecordWriter(this.fwaVisualizationRecordDefinition,
+        file)) {
       graph.forEachObject(record -> {
         final Record stream = this.fwaVisualizationRecordDefinition.newRecord(record);
         final LineString line = record.getGeometry().convertGeometry(GEOMETRY_FACTORY);
@@ -135,9 +195,6 @@ public class FwaMergeRecords implements FwaConstants {
           if (segmentLength.value + length > 2000) {
             double offset = 0;
             do {
-              if (offset > 0) {
-                Debug.noOp();
-              }
               final double projectDistance = 2000 - segmentLength.value;
               offset += projectDistance;
               if (offset >= length) {
