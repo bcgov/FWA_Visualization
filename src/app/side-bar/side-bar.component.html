@@ -15,11 +15,13 @@
           </tr>
           <tr>
             <th>Watershed Code</th>
-            <td>{{river.properties.fwawsc}}</td>
+            <td>{{river.properties.wsc}}</td>
           </tr>
           <tr>
             <th>Local Code</th>
-            <td>{{river.properties.localwsc}}</td>
+            <td>{{river.properties.minlwsc}}
+            <div *ngIf="river.properties.minlwsc != river.properties.maxlwsc">{{river.properties.maxlwsc}}</div>
+            </td>
           </tr>
           <tr *ngIf="river.properties.FEATURE_LENGTH_M">
             <th>Segment length</th>

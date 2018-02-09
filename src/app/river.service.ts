@@ -12,9 +12,11 @@ import * as L from 'leaflet';
 import {FwaMapComponent} from './fwamap/fwa-map.component';
 import {MapService} from 'revolsys-angular-leaflet';
 import {RiverLocations} from './RiverLocations';
+import {WatershedCode} from './WatershedCode';
+
 @Injectable()
 export class RiverService {
-  //        private readonly baseUrl = 'https://bcgov.revolsys.com:8445/fwa/tiles/3857';
+  //  private readonly baseUrl = 'https://bcgov.revolsys.com:8445/fwa/tiles/3857';
   private readonly baseUrl = '/tiles/3857';
 
   highlightedRiverLocations = new RiverLocations(this);
@@ -205,6 +207,13 @@ export class RiverService {
     this.tileRecordsById = tileRecordsById;
   }
 
+  private localCode(watershedCode: string, localWatershedCode: string): WatershedCode {
+    if (localWatershedCode) {
+      return new WatershedCode(watershedCode + '-' + localWatershedCode);
+    } else {
+      return new WatershedCode(watershedCode);
+    }
+  }
   private parseTsv(text: string, callback: (record: any) => void) {
     let first = true;
     for (const line of text.split('\n')) {
@@ -214,13 +223,9 @@ export class RiverService {
         const fields = line.split('\t');
         const id = fields[0];
         const watershedCode = fields[1].replace(/"/g, '');
-        let localWatershedCode = fields[2].replace(/"/g, '');
-        if (localWatershedCode) {
-          localWatershedCode = watershedCode + '-' + localWatershedCode;
-        } else {
-          localWatershedCode = watershedCode
-        }
-        const lineString = fields[3].replace(/"/g, '');
+        let watershedCodeLocalMin = this.localCode(watershedCode, fields[2].replace(/"/g, ''));
+        let watershedCodeLocalMax = this.localCode(watershedCode, fields[3].replace(/"/g, ''));
+        const lineString = fields[4].replace(/"/g, '');
 
         const coordinates = [];
         for (const point of lineString.substring(21, lineString.length - 1).split(',')) {
@@ -238,8 +243,9 @@ export class RiverService {
           },
           'properties': {
             'id': id,
-            'fwawsc': watershedCode,
-            'localwsc': localWatershedCode
+            'wsc': new WatershedCode(watershedCode),
+            'minlwsc': watershedCodeLocalMin,
+            'maxlwsc': watershedCodeLocalMax,
           }
         };
         callback(record);
