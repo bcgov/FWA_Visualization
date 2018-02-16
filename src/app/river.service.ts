@@ -1,3 +1,4 @@
+import {Config} from "./Config";
 import {Injectable} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
 import {Subject} from 'rxjs/Subject';
@@ -13,11 +14,10 @@ import {FwaMapComponent} from './fwamap/fwa-map.component';
 import {MapService} from 'revolsys-angular-leaflet';
 import {RiverLocations} from './RiverLocations';
 import {WatershedCode} from './WatershedCode';
+import {GnisNameService} from "./gnis-name.service";
 
 @Injectable()
 export class RiverService {
-  //  private readonly baseUrl = 'https://bcgov.revolsys.com:8445/fwa/tiles/3857';
-  private readonly baseUrl = '/tiles/3857';
 
   highlightedRiverLocations = new RiverLocations(this);
 
@@ -33,11 +33,11 @@ export class RiverService {
 
   private tileSize = -1;
 
-  private tileRecordsById: {[id: string]: {[riverId: string]: any}} = {};
+  private tileRecordsByIdAndTileId: {[tileId: string]: {[riverId: string]: any}} = {};
 
   public addRiver(riverLayer: any) {
     const properties = riverLayer.feature.properties;
-    const id = properties.id;
+    const id = properties['LINEAR_FEATURE_ID'];
     this.riverLayerById[id] = riverLayer;
   }
 
@@ -48,7 +48,8 @@ export class RiverService {
 
   constructor(
     private http: HttpClient,
-    public mapService: MapService
+    public mapService: MapService,
+    public nameService: GnisNameService
   ) {
   }
 
@@ -64,6 +65,15 @@ export class RiverService {
   public getRiverLayer(id: number): any {
     return this.riverLayerById[id];
   }
+
+  zoomTileSizes = {
+    6: 1000000,
+    7: 500000,
+    8: 200000,
+    9: 100000,
+    10: 50000,
+    11: 20000,
+  };
 
   public init() {
     this.mapService.withMap(map => {
@@ -89,22 +99,20 @@ export class RiverService {
       this.mapService.addOverlayLayer(this.riversLayer, 'FWA Stream Network');
       const loadHandler = (e) => {
         const zoom = map.getZoom();
-        console.log(zoom);
         let tileSize = 0;
         if (zoom >= 11) {
-          tileSize = 5000;
-        } else if (zoom >= 10) {
-          tileSize = 10000;
-        } else if (zoom >= 7) {
-          tileSize = 500000;
+          tileSize = 20000;
         } else {
-          tileSize = 0;
+          tileSize = this.zoomTileSizes[zoom];
+          if (!tileSize) {
+            tileSize = 0;
+          }
         }
         if (tileSize != this.tileSize) {
           this.tileSize = tileSize;
-          this.tileRecordsById = {};
+          this.tileRecordsByIdAndTileId = {};
           if (tileSize == 0) {
-            this.loadRiversTsv(`${this.baseUrl}/bc.tsv`);
+            this.loadRiversTsv(`${Config.baseUrl}/bc.tsv`);
           }
         }
         if (tileSize > 0) {
@@ -161,33 +169,37 @@ export class RiverService {
     const tileIds = [];
     for (let tileY = tileMinY; tileY < tileMaxY; tileY += tileSize) {
       for (let tileX = tileMinX; tileX < tileMaxX; tileX += tileSize) {
-        tileIds.push([tileX, tileY]);
+        tileIds.push(tileX + '/' + tileY);
       }
     }
     this.clear();
     layer.clearLayers();
-    const recordsById = {};
-    const tileRecordsById = {};
-    for (const tileId of tileIds) {
-      let tileRecordsById = this.tileRecordsById[tileId];
-      if (tileRecordsById) {
-        tileRecordsById[tileId] = tileRecordsById;
-      } else {
-        tileRecordsById = {};
-        tileRecordsById[tileId] = tileRecordsById;
 
-        const tileX = tileId[0];
-        const tileY = tileId[1];
-        this.http.get(`${this.baseUrl}/${tileSize}/${tileX}/${tileY}.tsv`, {
+    for (const tileId of Object.keys(this.tileRecordsByIdAndTileId)) {
+      if (tileIds.indexOf(tileId) == -1) {
+        delete this.tileRecordsByIdAndTileId[tileId];
+      }
+    }
+    for (const tileId of tileIds) {
+      let tileRecordsById = this.tileRecordsByIdAndTileId[tileId];
+      if (tileRecordsById) {
+        console.log(`from cache ${tileId}`);
+        layer.addData({
+          'type': 'FeatureCollection',
+          'features': Object.keys(tileRecordsById).map(key => tileRecordsById[key])
+        });
+      } else {
+        this.http.get(`${Config.baseUrl}/${tileSize}/${tileId}.tsv`, {
           responseType: 'text'
         })//
           .subscribe(text => {
             if (loadIndex === this.loadIndex) {
+              tileRecordsById = {};
+              this.tileRecordsByIdAndTileId[tileId] = tileRecordsById;
               this.parseTsv(text, record => {
-                const id = record.properties.id;
-                if (!(id in recordsById)) {
+                const id = record.properties['LINEAR_FEATURE_ID'];
+                if (!(id in this.riverLayerById)) {
                   tileRecordsById[id] = record;
-                  recordsById[id] = record;
                   layer.addData(record);
                 }
               });
@@ -196,39 +208,41 @@ export class RiverService {
           });
 
       }
-      Object.assign(recordsById, tileRecordsById);
     }
-    console.log(Object.keys(recordsById).length);
-    layer.addData({
-      'type': 'FeatureCollection',
-      'features': Object.keys(recordsById).map(key => recordsById[key])
-    });
 
-    this.tileRecordsById = tileRecordsById;
   }
 
-  private localCode(watershedCode: string, localWatershedCode: string): WatershedCode {
+  private localCode(properties: any, fieldName: string) {
+    const localWatershedCode = properties[fieldName];
+    const watershedCode = properties['FWA_WATERSHED_CODE']
     if (localWatershedCode) {
-      return new WatershedCode(watershedCode + '-' + localWatershedCode);
+      properties[fieldName] = new WatershedCode(watershedCode.toString() + '-' + localWatershedCode);
     } else {
-      return new WatershedCode(watershedCode);
+      properties[fieldName] = watershedCode;
     }
   }
   private parseTsv(text: string, callback: (record: any) => void) {
-    let first = true;
+    let fieldNames;
     for (const line of text.split('\n')) {
-      if (first) {
-        first = false;
+      if (!fieldNames) {
+        fieldNames = line.split('\t');
       } else if (line) {
         const fields = line.split('\t');
-        const id = fields[0];
-        const watershedCode = fields[1].replace(/"/g, '');
-        let watershedCodeLocalMin = this.localCode(watershedCode, fields[2].replace(/"/g, ''));
-        let watershedCodeLocalMax = this.localCode(watershedCode, fields[3].replace(/"/g, ''));
-        const lineString = fields[4].replace(/"/g, '');
+        const properties = {};
+        let fieldIndex = 0;
+        for (const fieldName of fieldNames) {
+          properties[fieldName] = fields[fieldIndex];
+          fieldIndex++;
+        }
+        this.nameService.setName(properties);
+        properties['FWA_WATERSHED_CODE'] = new WatershedCode(properties['FWA_WATERSHED_CODE']);
+        this.localCode(properties, 'MIN_LOCAL_WATERSHED_CODE');
+        this.localCode(properties, 'MAX_LOCAL_WATERSHED_CODE');
+        const lineString = properties['LineString'];
+        delete properties['LineString'];
 
         const coordinates = [];
-        for (const point of lineString.substring(21, lineString.length - 1).split(',')) {
+        for (const point of lineString.substring(11, lineString.length - 1).split(',')) {
           const parts = point.split(' ');
           const x = Number(parts[0]);
           const y = Number(parts[1]);
@@ -241,12 +255,7 @@ export class RiverService {
             'type': 'LineString',
             'coordinates': coordinates
           },
-          'properties': {
-            'id': id,
-            'wsc': new WatershedCode(watershedCode),
-            'minlwsc': watershedCodeLocalMin,
-            'maxlwsc': watershedCodeLocalMax,
-          }
+          'properties': properties
         };
         callback(record);
       }

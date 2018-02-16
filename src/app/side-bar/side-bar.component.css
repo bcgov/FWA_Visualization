@@ -24,3 +24,13 @@ tr.downstream td {
 tr.onStream td {
   color: #00CED1;
 }
+
+td.number {
+  text-align: right;
+}
+
+#riverTabContent {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}

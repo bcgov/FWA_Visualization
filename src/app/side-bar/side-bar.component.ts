@@ -75,4 +75,7 @@ export class SideBarComponent implements OnInit {
   ngOnInit() {
   }
 
+  km(length: number): string {
+    return (length / 1000).toFixed(1) + ' km';
+  }
 }

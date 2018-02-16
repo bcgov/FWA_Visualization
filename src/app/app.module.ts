@@ -16,6 +16,7 @@ import {EmsStationService} from './ems-station.service';
 import {RiverService} from './river.service';
 import {FwaMapComponent} from './fwamap/fwa-map.component';
 import {FwaLegendComponent} from './fwamap/fwa-legend.component';
+import {GnisNameService} from "./gnis-name.service";
 import {
   MapService,
   RevolsysAngularLeafletModule
@@ -52,6 +53,7 @@ import {SideBarComponent} from './side-bar/side-bar.component';
   providers: [
     MapService,
     EmsStationService,
+    GnisNameService,
     RiverService
   ],
   bootstrap: [LayoutComponent]

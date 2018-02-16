@@ -11,33 +11,29 @@
         <table class="table table-bordered table-striped">
           <tr>
             <th>Name</th>
-            <td>{{river.properties.name}}{{river.properties.GNIS_NAME}}</td>
+            <td>{{river.properties.GNIS_NAME}}</td>
           </tr>
           <tr>
             <th>Watershed Code</th>
-            <td>{{river.properties.wsc}}</td>
+            <td>{{river.properties.FWA_WATERSHED_CODE}}</td>
           </tr>
           <tr>
             <th>Local Code</th>
-            <td>{{river.properties.minlwsc}}
-            <div *ngIf="river.properties.minlwsc != river.properties.maxlwsc">{{river.properties.maxlwsc}}</div>
+            <td>{{river.properties.MIN_LOCAL_WATERSHED_CODE}}
+            <div *ngIf="river.properties.MIN_LOCAL_WATERSHED_CODE != river.properties.MAX_LOCAL_WATERSHED_CODE">{{river.properties.MAX_LOCAL_WATERSHED_CODE}}</div>
             </td>
           </tr>
-          <tr *ngIf="river.properties.FEATURE_LENGTH_M">
+          <tr *ngIf="river.properties.LENGTH_METRE">
             <th>Segment length</th>
-            <td>{{(river.properties.FEATURE_LENGTH_M / 1000).toFixed(1)}} km</td>
+            <td class="number">{{km(river.properties.LENGTH_METRE)}}</td>
           </tr>
-          <tr *ngIf="river.properties.seglen">
-            <th>Segment length</th>
-            <td>{{(river.properties.seglen / 1000).toFixed(1)}} km</td>
+          <tr *ngIf="river.properties.UPSTREAM_ROUTE_MEASURE">
+            <th>Upstream Measure</th>
+            <td class="number">{{km(river.properties.UPSTREAM_ROUTE_MEASURE)}}</td>
           </tr>
-          <tr *ngIf="river.properties.upslen">
-            <th>Upstream length</th>
-            <td>{{(river.properties.upslen / 1000).toFixed(1)}} km</td>
-          </tr>
-          <tr *ngIf="river.properties.upslen">
-            <th>Downstream length</th>
-            <td>{{(river.properties.dwnslen / 1000).toFixed(1)}} km</td>
+          <tr *ngIf="river.properties.DOWNSTREAM_ROUTE_MEASURE">
+            <th>Downstream Measure</th>
+            <td class="number">{{km(river.properties.DOWNSTREAM_ROUTE_MEASURE)}}</td>
           </tr>
         </table>
       </div>

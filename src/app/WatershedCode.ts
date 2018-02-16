@@ -1,5 +1,5 @@
 export class WatershedCode {
-  parts: number[] = [];
+  readonly parts: number[] = [];
 
   constructor(public code: string) {
     for (let part of code.split('-')) {
@@ -55,6 +55,14 @@ export class WatershedCode {
 
   equalsMajor(watershedCode: WatershedCode) {
     return this.parts[0] === watershedCode.parts[0];
+  }
+
+  get length(): number {
+    let length = 0;
+    for (let i = 1; i < this.parts.length; i++) {
+      length += this.parts[i];
+    }
+    return length;
   }
 
   toString(): string {

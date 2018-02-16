@@ -23,7 +23,7 @@ export class RiverLocations {
 
   get id(): string {
     if (this.river) {
-      return this.river.feature.properties.id;
+      return this.river.feature.properties['LINEAR_FEATURE_ID'];
     } else {
       return null;
     }
@@ -54,10 +54,10 @@ export class RiverLocations {
   getRiverLocation(river: any): number {
     if (this.watershedCode) {
       const properties = river.properties;
-      const riverWatershedCode = properties.wsc;
+      const riverWatershedCode = properties['FWA_WATERSHED_CODE'];
       if (this.watershedCode.equalsMajor(riverWatershedCode)) {
-        const riverWatershedCodeLocalMin = properties.minlwsc;
-        let riverWatershedCodeLocalMax = properties.maxlwsc;
+        const riverWatershedCodeLocalMin = properties['MIN_LOCAL_WATERSHED_CODE'];
+        let riverWatershedCodeLocalMax = properties['MAX_LOCAL_WATERSHED_CODE'];
         if (this.watershedCode.equals(riverWatershedCode)) {
           if (riverWatershedCodeLocalMax.code < this.watershedCodeLocalMin.code) {
             if (!riverWatershedCode.equals(riverWatershedCodeLocalMax)) {
@@ -105,9 +105,9 @@ export class RiverLocations {
   }
 
   private setLocalWatershedCode(river: any) {
-    const watershedCode = river.properties.wsc;
+    const watershedCode = river.properties['FWA_WATERSHED_CODE'];
     if (!this.localWatershedCodeByWatershedCode[watershedCode]) {
-      this.localWatershedCodeByWatershedCode[watershedCode] = river.properties.minlwsc;
+      this.localWatershedCodeByWatershedCode[watershedCode] = river.properties['MIN_LOCAL_WATERSHED_CODE'];
     }
   }
 
@@ -120,27 +120,31 @@ export class RiverLocations {
         this.river = riverLayer;
         river = riverLayer.feature;
         properties = river.properties;
-        this.watershedCode = properties.wsc;
-        this.watershedCodeLocalMin = properties.minlwsc;
-        this.watershedCodeLocalMax = properties.maxlwsc;
+        this.watershedCode = properties['FWA_WATERSHED_CODE'];
+        this.watershedCodeLocalMin = properties['MIN_LOCAL_WATERSHED_CODE'];
+        this.watershedCodeLocalMax = properties['MAX_LOCAL_WATERSHED_CODE'];
         this.setLocalWatershedCode(river);
       }
       this.riverService.resetStyles();
       this.change.next(riverLayer);
     }
-    if (riverLayer && this.riverService.riverSource == 1) {
-      const id = river['properties']['id'];
-      this.riverService.mapService.getWfsFeatures(
-        'https://openmaps.gov.bc.ca/geo/pub/WHSE_BASEMAPPING.FWA_STREAM_NETWORKS_SP/wfs',
-        'WHSE_BASEMAPPING.FWA_STREAM_NETWORKS_SP', {
-          cql_filter: `LINEAR_FEATURE_ID=${riverLayer.feature['properties']['id']}`
-        }, results => {
-          const result = results['features'][0];
-          if (result && this.river == riverLayer) {
-            Object.assign(properties, result['properties']);
-          }
-        });
-    }
+    //    if (riverLayer) {
+    //      const id = river['properties']['LINEAR_FEATURE_ID'];
+    //      const name = this.nameService.nameById[id];
+    //      if (name) {
+    //        properties['GNIS_NAME'] = result['properties']['GNIS_NAME'];
+    //      }
+    //      this.riverService.mapService.getWfsFeatures(
+    //        'https://openmaps.gov.bc.ca/geo/pub/WHSE_BASEMAPPING.FWA_STREAM_NETWORKS_SP/wfs',
+    //        'WHSE_BASEMAPPING.FWA_STREAM_NETWORKS_SP', {
+    //          cql_filter: `LINEAR_FEATURE_ID=${riverLayer.feature['properties']['LINEAR_FEATURE_ID']}`
+    //        }, results => {
+    //          const result = results['features'][0];
+    //          if (result && this.river == riverLayer) {
+    //            properties['GNIS_NAME'] = result['properties']['GNIS_NAME'];
+    //          }
+    //        });
+    //    }
   }
 
 
