@@ -70,12 +70,12 @@ public class FwaLocalCodes {
 
     final RecordDefinition streamRecordDefinition = new RecordDefinitionBuilder(
       PathName.newPathName(FWA_STREAM_NETWORK)) //
-        .addField(ROUTE_ID, DataTypes.INTEGER) //
+        .addField(ROUTE_ID, DataTypes.INT) //
         .addField(FROM_DISTANCE, DataTypes.DOUBLE) //
         .addField(TO_DISTANCE, DataTypes.DOUBLE) //
         .addField(WATERSHED_CODE, DataTypes.STRING, 143) //
-        .addField("FROM_LOCAL_CODE", DataTypes.INTEGER) //
-        .addField("TO_LOCAL_CODE", DataTypes.INTEGER) //
+        .addField("FROM_LOCAL_CODE", DataTypes.INT) //
+        .addField("TO_LOCAL_CODE", DataTypes.INT) //
         .addField(DataTypes.LINE_STRING) //
         .setGeometryFactory(GEOMETRY_FACTORY)//
         .getRecordDefinition();

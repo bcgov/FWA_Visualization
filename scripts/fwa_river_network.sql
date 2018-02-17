@@ -20,6 +20,8 @@ CREATE TABLE fwa.fwa_river_network (
   GRADIENT                   double precision,
   FEATURE_CODE               varchar(10),
   UPSTREAM_ROUTE_MEASURE     double precision,
+  DOWNSTREAM_LENGTH          double precision,
+  UPSTREAM_LENGTH            double precision,
   GEOMETRY                   GEOMETRY(MultiLineString,3005),
   PRIMARY KEY (LINEAR_FEATURE_ID)
 );

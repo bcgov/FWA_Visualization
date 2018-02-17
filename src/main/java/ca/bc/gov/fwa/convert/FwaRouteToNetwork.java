@@ -68,7 +68,7 @@ public class FwaRouteToNetwork {
 
     final RecordDefinition streamRecordDefinition = new RecordDefinitionBuilder(
       PathName.newPathName("/FWA_STREAM_NETWORK")) //
-        .addField(ROUTE_ID, DataTypes.INTEGER) //
+        .addField(ROUTE_ID, DataTypes.INT) //
         .addField(FROM_DISTANCE, DataTypes.DOUBLE) //
         .addField(TO_DISTANCE, DataTypes.DOUBLE) //
         .addField(WATERSHED_CODE, DataTypes.STRING, 143) //

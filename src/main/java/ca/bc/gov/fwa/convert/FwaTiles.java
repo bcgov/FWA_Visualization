@@ -42,7 +42,7 @@ public class FwaTiles implements FwaConstants {
 
   private final RecordDefinition streamRecordDefinition = new RecordDefinitionBuilder(
     PathName.newPathName("/FWA_STREAM_TILE")) //
-      .addField(LINEAR_FEATURE_ID, DataTypes.INTEGER) //
+      .addField(LINEAR_FEATURE_ID, DataTypes.INT) //
       .addField(WATERSHED_CODE, DataTypes.STRING, 143) //
       .addField(LOCAL_WATERSHED_CODE, DataTypes.STRING, 143) //
       .addField(DataTypes.LINE_STRING) //
