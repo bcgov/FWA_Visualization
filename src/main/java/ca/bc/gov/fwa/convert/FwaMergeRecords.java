@@ -233,7 +233,7 @@ public class FwaMergeRecords implements FwaConstants {
     return graph;
   }
 
-  private int graphWrite(final Path file, final RecordGraph graph) {
+  private int graphWrite(final Path file, final RecordGraph graph, final int maxSegmentLength) {
     try (
       RecordWriter writer = Tsv.newRecordWriter(this.fwaVisualizationRecordDefinition, file, false,
         false)) {
@@ -245,10 +245,10 @@ public class FwaMergeRecords implements FwaConstants {
         final DoubleValue segmentLength = new DoubleValue();
         line.forEachSegment((x1, y1, x2, y2) -> {
           final double length = MathUtil.distance(x1, y1, x2, y2);
-          if (segmentLength.value + length > 2000) {
+          if (segmentLength.value + length > maxSegmentLength) {
             double offset = 0;
             do {
-              final double projectDistance = 2000 - segmentLength.value;
+              final double projectDistance = maxSegmentLength - segmentLength.value;
               offset += projectDistance;
               if (offset >= length) {
                 newLine.appendVertex(x1, x2);
@@ -258,7 +258,7 @@ public class FwaMergeRecords implements FwaConstants {
                 newLine.appendVertex(point);
                 segmentLength.value = 0;
               }
-            } while (offset + 2000 < length);
+            } while (offset + maxSegmentLength < length);
           } else {
             segmentLength.addValue(length);
           }
@@ -277,10 +277,10 @@ public class FwaMergeRecords implements FwaConstants {
       .resolve("bc.tsv");
 
     final Query query = new Query(FWA_RIVER_NETWORK) //
-      .setWhereCondition(Q.greaterThanEqual(STREAM_ORDER, 7));
+      .setWhereCondition(Q.greaterThanEqual(BLUE_LINE_KEY_STREAM_ORDER, 7));
     try (
       RecordReader reader = this.recordStore.getRecords(query)) {
-      writeMergedRecords("BC", file, reader, null);
+      writeMergedRecords("BC", file, reader, null, 2000);
     }
   }
 
@@ -298,11 +298,12 @@ public class FwaMergeRecords implements FwaConstants {
       .convert(GeometryFactory.fixed(3005, 2, 1.0, 1.0));
 
     final Query query = new Query(FWA_RIVER_NETWORK) //
-      .and(Q.greaterThanEqual(STREAM_ORDER, streamOrder)) //
+      .and(Q.greaterThanEqual(BLUE_LINE_KEY_STREAM_ORDER, streamOrder)) //
       .and(F.envelopeIntersects("GEOMETRY", albersBoundingBox));
     try (
       RecordReader reader = this.recordStore.getRecords(query)) {
-      writeMergedRecords(tileSize + "\t" + tileX + "\t" + tileY, tilePath, reader, boundingBox);
+      writeMergedRecords(tileSize + "\t" + tileX + "\t" + tileY, tilePath, reader, boundingBox,
+        tileSize / 1000);
     }
   }
 
@@ -391,12 +392,12 @@ public class FwaMergeRecords implements FwaConstants {
   }
 
   private void writeMergedRecords(final String prefix, final Path file,
-    final Iterable<Record> records, final BoundingBox boundingBox) {
+    final Iterable<Record> records, final BoundingBox boundingBox, final int maxSegmentLength) {
     final RecordGraph graph = graphNew(records, boundingBox);
     final int recordCount = graph.getEdgeCount();
     graphMerge(graph);
 
-    graphWrite(file, graph);
+    graphWrite(file, graph, maxSegmentLength);
     final int writeCount = graph.getEdgeCount();
     System.out.println(prefix + "\t" + recordCount + "\t" + writeCount);
   }

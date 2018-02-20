@@ -31,6 +31,10 @@ GRANT SELECT,INSERT,UPDATE,DELETE,TRUNCATE on fwa.fwa_river_network TO gba_user;
 
 CREATE INDEX fwa_river_network_SI ON fwa.fwa_river_network USING GIST (GEOMETRY);
 
+CREATE INDEX fwa_river_network_stream_order_i ON fwa.fwa_river_network (STREAM_ORDER);
 
+CREATE INDEX fwa_river_network_blue_line_key_i ON fwa.fwa_river_network (BLUE_LINE_KEY);
 
-CREATE INDEX fwa_river_network_stream_order ON fwa.fwa_river_network (STREAM_ORDER);
+CREATE INDEX fwa_river_network_GNIS_ID_i ON fwa.fwa_river_network (GNIS_ID);
+
+CREATE INDEX fwa_river_network_GNIS_NAME_i ON fwa.fwa_river_network (GNIS_NAME);
