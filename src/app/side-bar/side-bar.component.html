@@ -27,13 +27,13 @@
             <th>Segment length</th>
             <td class="number">{{km(river.properties.LENGTH_METRE)}}</td>
           </tr>
-          <tr *ngIf="river.properties.UPSTREAM_ROUTE_MEASURE">
-            <th>Upstream Measure</th>
-            <td class="number">{{km(river.properties.UPSTREAM_ROUTE_MEASURE)}}</td>
+          <tr *ngIf="river.properties.UPSTREAM_LENGTH">
+            <th>Upstream Length</th>
+            <td class="number">{{km(river.properties.UPSTREAM_LENGTH)}}</td>
           </tr>
-          <tr *ngIf="river.properties.DOWNSTREAM_ROUTE_MEASURE">
-            <th>Downstream Measure</th>
-            <td class="number">{{km(river.properties.DOWNSTREAM_ROUTE_MEASURE)}}</td>
+          <tr *ngIf="river.properties.DOWNSTREAM_LENGTH">
+            <th>Downstream Length</th>
+            <td class="number">{{km(river.properties.DOWNSTREAM_LENGTH)}}</td>
           </tr>
         </table>
       </div>
@@ -57,7 +57,7 @@
                 role="button"
                 title="Data Results"
               ><i class="fa fa-table"></i></a></td>
-              <td>{{emsStationLocalWatershedCode(emsStationId)}}</td>
+              <td>{{emsStationName(emsStationId)}}</td>
             </tr>
           </tbody>
         </table>

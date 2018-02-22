@@ -121,6 +121,9 @@ export class RiverLocations {
         river = riverLayer.feature;
         properties = river.properties;
         this.watershedCode = properties['FWA_WATERSHED_CODE'];
+        if (this.watershedCode.code.startsWith('999')) {
+          this.watershedCode = null;
+        }
         this.watershedCodeLocalMin = properties['MIN_LOCAL_WATERSHED_CODE'];
         this.watershedCodeLocalMax = properties['MAX_LOCAL_WATERSHED_CODE'];
         this.setLocalWatershedCode(river);
@@ -128,25 +131,7 @@ export class RiverLocations {
       this.riverService.resetStyles();
       this.change.next(riverLayer);
     }
-    //    if (riverLayer) {
-    //      const id = river['properties']['LINEAR_FEATURE_ID'];
-    //      const name = this.nameService.nameById[id];
-    //      if (name) {
-    //        properties['GNIS_NAME'] = result['properties']['GNIS_NAME'];
-    //      }
-    //      this.riverService.mapService.getWfsFeatures(
-    //        'https://openmaps.gov.bc.ca/geo/pub/WHSE_BASEMAPPING.FWA_STREAM_NETWORKS_SP/wfs',
-    //        'WHSE_BASEMAPPING.FWA_STREAM_NETWORKS_SP', {
-    //          cql_filter: `LINEAR_FEATURE_ID=${riverLayer.feature['properties']['LINEAR_FEATURE_ID']}`
-    //        }, results => {
-    //          const result = results['features'][0];
-    //          if (result && this.river == riverLayer) {
-    //            properties['GNIS_NAME'] = result['properties']['GNIS_NAME'];
-    //          }
-    //        });
-    //    }
   }
-
 
   subscribe(callback: (value: any) => void) {
     this.change.subscribe(callback);

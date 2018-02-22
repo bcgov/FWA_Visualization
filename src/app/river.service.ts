@@ -112,7 +112,7 @@ export class RiverService {
           this.tileSize = tileSize;
           this.tileRecordsByIdAndTileId = {};
           if (tileSize == 0) {
-            this.loadRiversTsv(`${Config.baseUrl}/bc.tsv`);
+            this.loadRiversBinary(`${Config.baseUrl}/bin/bc.bin`);
           }
         }
         if (tileSize > 0) {
@@ -139,17 +139,16 @@ export class RiverService {
     });
   }
 
-  private loadRiversTsv(file: string) {
-    console.log(file);
+  private loadRiversBinary(file: string) {
     const loadIndex = ++this.loadIndex;
     this.http.get(file, {
-      responseType: 'text'
-    }).subscribe(text => {
+      responseType: 'arraybuffer'
+    }).subscribe(buffer => {
       if (loadIndex === this.loadIndex) {
         const layer = this.riversLayer;
         this.clear();
         layer.clearLayers();
-        this.parseTsv(text, record => {
+        this.readBinary(buffer, record => {
           layer.addData(record);
         });
       }
@@ -183,20 +182,19 @@ export class RiverService {
     for (const tileId of tileIds) {
       let tileRecordsById = this.tileRecordsByIdAndTileId[tileId];
       if (tileRecordsById) {
-        console.log(`from cache ${tileId}`);
         layer.addData({
           'type': 'FeatureCollection',
           'features': Object.keys(tileRecordsById).map(key => tileRecordsById[key])
         });
       } else {
-        this.http.get(`${Config.baseUrl}/${tileSize}/${tileId}.tsv`, {
-          responseType: 'text'
+        this.http.get(`${Config.baseUrl}/bin/${tileSize}/${tileId}.bin`, {
+          responseType: 'arraybuffer'
         })//
-          .subscribe(text => {
+          .subscribe(buffer => {
             if (loadIndex === this.loadIndex) {
               tileRecordsById = {};
               this.tileRecordsByIdAndTileId[tileId] = tileRecordsById;
-              this.parseTsv(text, record => {
+              this.readBinary(buffer, record => {
                 const id = record.properties['LINEAR_FEATURE_ID'];
                 if (!(id in this.riverLayerById)) {
                   tileRecordsById[id] = record;
@@ -216,51 +214,112 @@ export class RiverService {
     const localWatershedCode = properties[fieldName];
     const watershedCode = properties['FWA_WATERSHED_CODE']
     if (localWatershedCode) {
-      properties[fieldName] = new WatershedCode(watershedCode.toString() + '-' + localWatershedCode);
+      if (localWatershedCode.indexOf('-') == 3 || localWatershedCode.length == 3) {
+        properties[fieldName] = new WatershedCode(localWatershedCode);
+      } else {
+        properties[fieldName] = new WatershedCode(watershedCode.toString() + '-' + localWatershedCode);
+      }
     } else {
       properties[fieldName] = watershedCode;
     }
   }
-  private parseTsv(text: string, callback: (record: any) => void) {
-    let fieldNames;
-    for (const line of text.split('\n')) {
-      if (!fieldNames) {
-        fieldNames = line.split('\t');
-      } else if (line) {
-        const fields = line.split('\t');
-        const properties = {};
-        let fieldIndex = 0;
-        for (const fieldName of fieldNames) {
-          properties[fieldName] = fields[fieldIndex];
-          fieldIndex++;
-        }
-        this.nameService.setName(properties);
-        properties['FWA_WATERSHED_CODE'] = new WatershedCode(properties['FWA_WATERSHED_CODE']);
-        this.localCode(properties, 'MIN_LOCAL_WATERSHED_CODE');
-        this.localCode(properties, 'MAX_LOCAL_WATERSHED_CODE');
-        const lineString = properties['LineString'];
-        delete properties['LineString'];
 
-        const coordinates = [];
-        for (const point of lineString.substring(11, lineString.length - 1).split(',')) {
-          const parts = point.split(' ');
-          const x = Number(parts[0]);
-          const y = Number(parts[1]);
-          const latLng = L.CRS.EPSG3857.unproject(L.point(x, y));
-          coordinates.push([latLng.lng, latLng.lat]);
-        }
-        const record = {
-          'type': 'Feature',
-          'geometry': {
-            'type': 'LineString',
-            'coordinates': coordinates
-          },
-          'properties': properties
-        };
-        callback(record);
-      }
+  private readBinary(buffer: ArrayBuffer, callback: (record: any) => void) {
+    const length = buffer.byteLength;
+    const data = new DataView(buffer);
+    let offset = 0;
+    while (offset < length) {
+      const properties = {};
+      offset = this.readBinaryInt(data, offset, properties, 'LINEAR_FEATURE_ID');
+      offset = this.readBinaryInt(data, offset, properties, 'GNIS_ID');
+      offset = this.readBinaryWatershedCode(data, offset, properties, 'FWA_WATERSHED_CODE');
+      offset = this.readBinaryWatershedCode(data, offset, properties, 'MIN_LOCAL_WATERSHED_CODE');
+      offset = this.readBinaryWatershedCode(data, offset, properties, 'MAX_LOCAL_WATERSHED_CODE');
+      offset = this.readBinaryDouble(data, offset, properties, 'DOWNSTREAM_LENGTH');
+      offset = this.readBinaryDouble(data, offset, properties, 'UPSTREAM_LENGTH');
+      offset = this.readBinaryDoubleIntScale(data, offset, 1000.0, properties, 'LENGTH');
+      this.nameService.setName(properties);
+      properties['FWA_WATERSHED_CODE'] = new WatershedCode(properties['FWA_WATERSHED_CODE']);
+      this.localCode(properties, 'MIN_LOCAL_WATERSHED_CODE');
+      this.localCode(properties, 'MAX_LOCAL_WATERSHED_CODE');
+      const record = {
+        'type': 'Feature',
+        'properties': properties
+      };
+      offset = this.readBinaryLineString(data, offset, record);
+      callback(record);
     }
   }
+
+  private readBinaryInt(data: DataView, offset: number, properties: any, name: string) {
+    properties[name] = data.getInt32(offset, false);
+    return offset + 4;
+  }
+
+  private readBinaryDoubleIntScale(data: DataView, offset: number, scale: number, properties: any, name: string) {
+    const intValue = data.getInt32(offset, false);
+    properties[name] = intValue / scale;
+    return offset + 4;
+  }
+
+  private readBinaryDouble(data: DataView, offset: number, properties: any, name: string) {
+    properties[name] = data.getFloat64(offset, false);
+    return offset + 8;
+  }
+
+  private readBinaryWatershedCode(data: DataView, offset: number, properties: any, name: string) {
+    let count = data.getInt8(offset);
+    let partLen = 3;
+    if (count < 0) {
+      count = -count;
+      partLen = 6;
+    }
+    offset += 1;
+    if (count > 0) {
+      let watershedCode: string;
+      for (let i = 0; i < count; i++) {
+        if (watershedCode) {
+          watershedCode += '-';
+        } else {
+          watershedCode = '';
+        }
+        const part = data.getInt32(offset, false).toString();
+        offset += 4;
+
+        for (let i = part.length; i < partLen; i++) {
+          watershedCode += '0';
+        }
+        watershedCode += part;
+        partLen = 6;
+      }
+      properties[name] = watershedCode;
+    }
+    return offset;
+  }
+
+  private readBinaryLineString(data: DataView, offset: number, record: any) {
+    const vertexCount = data.getInt32(offset, false);
+    offset += 4;
+    if (vertexCount > 0) {
+      let coordinates = [];
+      for (let i = 0; i < vertexCount; i++) {
+        const lonInt = data.getInt32(offset, false);
+        offset += 4;
+        const latInt = data.getInt32(offset, false);
+        offset += 4;
+        coordinates.push([
+          lonInt / 10000000.0,
+          latInt / 10000000.0,
+        ]);
+      }
+      record['geometry'] = {
+        'type': 'LineString',
+        'coordinates': coordinates
+      };
+    }
+    return offset;
+  }
+
   resetStyles() {
     this.riversLayer.eachLayer(layer => this.riversLayer.resetStyle(layer));
   }
