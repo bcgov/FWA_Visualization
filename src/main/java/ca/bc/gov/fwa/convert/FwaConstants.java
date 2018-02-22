@@ -10,8 +10,6 @@ public interface FwaConstants {
 
   static String DOWNSTREAM_LENGTH = "DOWNSTREAM_LENGTH";
 
-  static String DOWNSTREAM_ROUTE_MEASURE = "DOWNSTREAM_ROUTE_MEASURE";
-
   static PathName FWA_RIVER_NETWORK = PathName.newPathName("/FWA/FWA_RIVER_NETWORK");
 
   static String FWA_WATERSHED_CODE = "FWA_WATERSHED_CODE";
@@ -34,11 +32,11 @@ public interface FwaConstants {
 
   static String MIN_LOCAL_WATERSHED_CODE = "MIN_LOCAL_WATERSHED_CODE";
 
+  static String ROUTES = "ROUTES";
+
   static String STREAM_ORDER = "STREAM_ORDER";
 
   static String UPSTREAM_LENGTH = "UPSTREAM_LENGTH";
-
-  static String UPSTREAM_ROUTE_MEASURE = "UPSTREAM_ROUTE_MEASURE";
 
   static String WATERSHED_CODE = "WATERSHED_CODE";
 }

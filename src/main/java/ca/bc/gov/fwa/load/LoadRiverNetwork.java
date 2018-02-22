@@ -73,13 +73,21 @@ public class LoadRiverNetwork implements FwaConstants {
                 if (watershedCode == null) {
                   watershedCode = "";
                 } else {
-                  watershedCode = watershedCode.replaceAll("(-0+)+$\\s*", "");
+                  if (watershedCode.startsWith("999")) {
+                    watershedCode = "999";
+                  } else {
+                    watershedCode = watershedCode.replaceAll("(-0+)+$\\s*", "");
+                  }
                   record.setValue(FWA_WATERSHED_CODE, watershedCode.intern());
                 }
 
                 String localWatershedCode = record.getString(LOCAL_WATERSHED_CODE);
-                if (localWatershedCode != null) {
-                  localWatershedCode = localWatershedCode.replaceAll("(-0+)+\\s*$", "");
+                if (localWatershedCode != null && !"<Null>".equals(localWatershedCode)) {
+                  if (localWatershedCode.startsWith("999")) {
+                    localWatershedCode = "999";
+                  } else {
+                    localWatershedCode = localWatershedCode.replaceAll("(-0+)+$\\s*", "");
+                  }
                   if (localWatershedCode.startsWith(watershedCode)) {
                     final int length = watershedCode.length();
                     if (length == localWatershedCode.length()) {
@@ -100,6 +108,9 @@ public class LoadRiverNetwork implements FwaConstants {
                 record.setGeometryValue(line);
                 final Record newRecord = jdbcRecordStore.newRecord(FWA_RIVER_NETWORK, record);
                 newRecord.setIdentifier(record.getIdentifier(LINEAR_FEATURE_ID));
+                newRecord.setValue(DOWNSTREAM_LENGTH, 0);
+                newRecord.setValue(UPSTREAM_LENGTH, 0);
+                newRecord.setValue(BLUE_LINE_KEY_STREAM_ORDER, record, STREAM_ORDER);
                 writer.write(newRecord);
               }
             }

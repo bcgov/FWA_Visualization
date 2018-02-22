@@ -10,6 +10,7 @@ import ca.bc.gov.fwa.FwaController;
 
 import com.revolsys.collection.map.IntHashMap;
 import com.revolsys.datatype.DataTypes;
+import com.revolsys.geometry.cs.projection.CoordinatesOperation;
 import com.revolsys.geometry.graph.Edge;
 import com.revolsys.geometry.graph.RecordGraph;
 import com.revolsys.geometry.model.BoundingBox;
@@ -20,18 +21,19 @@ import com.revolsys.geometry.model.coordinates.LineSegmentUtil;
 import com.revolsys.geometry.model.editor.LineStringEditor;
 import com.revolsys.geometry.util.OutCode;
 import com.revolsys.io.PathName;
+import com.revolsys.io.channels.ChannelWriter;
 import com.revolsys.parallel.process.ProcessNetwork;
 import com.revolsys.record.Record;
 import com.revolsys.record.io.RecordReader;
 import com.revolsys.record.io.RecordWriter;
 import com.revolsys.record.io.format.csv.CsvRecordWriter;
-import com.revolsys.record.io.format.tsv.Tsv;
 import com.revolsys.record.query.Q;
 import com.revolsys.record.query.Query;
 import com.revolsys.record.query.functions.F;
 import com.revolsys.record.schema.RecordDefinition;
 import com.revolsys.record.schema.RecordDefinitionBuilder;
 import com.revolsys.record.schema.RecordStore;
+import com.revolsys.spring.resource.PathResource;
 import com.revolsys.util.Debug;
 import com.revolsys.util.IntPair;
 import com.revolsys.util.MathUtil;
@@ -63,8 +65,8 @@ public class FwaMergeRecords implements FwaConstants {
       .addField(FWA_WATERSHED_CODE, DataTypes.STRING, 143) //
       .addField(MIN_LOCAL_WATERSHED_CODE, DataTypes.STRING, 143) //
       .addField(MAX_LOCAL_WATERSHED_CODE, DataTypes.STRING, 143) //
-      .addField(DOWNSTREAM_ROUTE_MEASURE, DataTypes.DOUBLE) //
-      .addField(UPSTREAM_ROUTE_MEASURE, DataTypes.DOUBLE) //
+      .addField(DOWNSTREAM_LENGTH, DataTypes.DOUBLE) //
+      .addField(UPSTREAM_LENGTH, DataTypes.DOUBLE) //
       .addField(LENGTH_METRE, DataTypes.DOUBLE) //
       .addField(DataTypes.LINE_STRING) //
       .setGeometryFactory(GEOMETRY_FACTORY)//
@@ -79,14 +81,14 @@ public class FwaMergeRecords implements FwaConstants {
       .addField(FWA_WATERSHED_CODE, DataTypes.STRING, 143) //
       .addField(MIN_LOCAL_WATERSHED_CODE, DataTypes.STRING, 143) //
       .addField(MAX_LOCAL_WATERSHED_CODE, DataTypes.STRING, 143) //
-      .addField(DOWNSTREAM_ROUTE_MEASURE, DataTypes.DOUBLE) //
-      .addField(UPSTREAM_ROUTE_MEASURE, DataTypes.DOUBLE) //
+      .addField(DOWNSTREAM_LENGTH, DataTypes.DOUBLE) //
+      .addField(UPSTREAM_LENGTH, DataTypes.DOUBLE) //
       .addField(LENGTH_METRE, DataTypes.DOUBLE) //
       .addField(DataTypes.LINE_STRING) //
       .setGeometryFactory(GEOMETRY_FACTORY)//
       .getRecordDefinition();
 
-  private final Path fwaPath = Paths.get(PATH + GEOMETRY_FACTORY.getCoordinateSystemId());
+  private final Path fwaPath = Paths.get(PATH + GEOMETRY_FACTORY.getCoordinateSystemId() + "/bin");
 
   private final RecordStore recordStore = FwaController.getFwaRecordStore();
 
@@ -138,8 +140,8 @@ public class FwaMergeRecords implements FwaConstants {
                   final double length2 = record2.getDouble(LENGTH_METRE);
                   newRecord.setValue(LENGTH_METRE, length1 + length2);
 
-                  setMin(newRecord, DOWNSTREAM_ROUTE_MEASURE, record1, record2);
-                  setMax(newRecord, UPSTREAM_ROUTE_MEASURE, record1, record2);
+                  setMin(newRecord, DOWNSTREAM_LENGTH, record1, record2);
+                  setMin(newRecord, UPSTREAM_LENGTH, record1, record2);
                 }
               }
             } else {
@@ -234,9 +236,14 @@ public class FwaMergeRecords implements FwaConstants {
   }
 
   private int graphWrite(final Path file, final RecordGraph graph, final int maxSegmentLength) {
+    final double[] coordinates = new double[2];
+    final CoordinatesOperation coordinatesOperation = GEOMETRY_FACTORY
+      .getCoordinatesOperation(GEOMETRY_FACTORY.getGeographicGeometryFactory());
     try (
-      RecordWriter writer = Tsv.newRecordWriter(this.fwaVisualizationRecordDefinition, file, false,
-        false)) {
+      // RecordWriter tsvWriter = Tsv.newRecordWriter(this.fwaVisualizationRecordDefinition, file,
+      // false, false);
+      ChannelWriter binaryWriter = new PathResource(file).newResourceChangeExtension("bin")
+        .newChannelWriter();) {
       graph.forEachObject(record -> {
         final Record stream = this.fwaVisualizationRecordDefinition.newRecord(record);
         final LineString line = record.getGeometry().convertGeometry(GEOMETRY_FACTORY);
@@ -266,21 +273,47 @@ public class FwaMergeRecords implements FwaConstants {
         final int lastVertexIndex = line.getLastVertexIndex();
         newLine.appendVertex(line.getX(lastVertexIndex), line.getY(lastVertexIndex), false);
         stream.setGeometryValue(newLine);
-        writer.write(stream);
+        // tsvWriter.write(stream);
+
+        final int id = record.getInteger(LINEAR_FEATURE_ID);
+        final int gnisId = record.getInteger(GNIS_ID, -1);
+        final double downstreamLength = record.getDouble(DOWNSTREAM_LENGTH, 0);
+        final double upstreamLength = record.getDouble(UPSTREAM_LENGTH, 0);
+        final double length = record.getDouble(LENGTH_METRE, 0);
+
+        binaryWriter.putInt(id);
+        binaryWriter.putInt(gnisId);
+        writeWaterShedCode(binaryWriter, record, FWA_WATERSHED_CODE);
+        writeWaterShedCode(binaryWriter, record, MIN_LOCAL_WATERSHED_CODE);
+        writeWaterShedCode(binaryWriter, record, MAX_LOCAL_WATERSHED_CODE);
+        binaryWriter.putDouble(downstreamLength);
+        binaryWriter.putDouble(upstreamLength);
+        binaryWriter.putInt((int)Math.round(length * 1000));
+        binaryWriter.putInt(newLine.getVertexCount());
+
+        newLine.forEachVertex((x, y) -> {
+          coordinates[0] = x;
+          coordinates[1] = y;
+          coordinatesOperation.perform(2, coordinates, 2, coordinates);
+          final int lonInt = (int)Math.round(coordinates[0] * 10000000);
+          final int latInt = (int)Math.round(coordinates[1] * 10000000);
+          binaryWriter.putInt(lonInt);
+          binaryWriter.putInt(latInt);
+        });
       });
     }
     return graph.getEdgeCount();
   }
 
   private void mergeBc() {
-    final Path file = this.fwaPath //
+    final Path tsvFile = this.fwaPath //
       .resolve("bc.tsv");
 
     final Query query = new Query(FWA_RIVER_NETWORK) //
       .setWhereCondition(Q.greaterThanEqual(BLUE_LINE_KEY_STREAM_ORDER, 7));
     try (
       RecordReader reader = this.recordStore.getRecords(query)) {
-      writeMergedRecords("BC", file, reader, null, 2000);
+      writeMergedRecords("BC", tsvFile, reader, null, 2000);
     }
   }
 
@@ -400,5 +433,24 @@ public class FwaMergeRecords implements FwaConstants {
     graphWrite(file, graph, maxSegmentLength);
     final int writeCount = graph.getEdgeCount();
     System.out.println(prefix + "\t" + recordCount + "\t" + writeCount);
+  }
+
+  private void writeWaterShedCode(final ChannelWriter binaryWriter, final Record record,
+    final String fieldName) {
+    final String watershedCode = record.getString(fieldName, "");
+    if (watershedCode.length() == 0) {
+      binaryWriter.putByte((byte)0);
+    } else {
+      final String[] parts = watershedCode.split("-");
+      if (parts[0].length() == 6) {
+        binaryWriter.putByte((byte)-parts.length);
+      } else {
+        binaryWriter.putByte((byte)parts.length);
+      }
+      for (int i = 0; i < parts.length; i++) {
+        final String part = parts[i];
+        binaryWriter.putInt(Integer.parseInt(part));
+      }
+    }
   }
 }
