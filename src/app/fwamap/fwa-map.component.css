@@ -1,8 +1,8 @@
 :host {
-  flex: 1;
+  flex: 1 1 auto;
   display:flex;
 }
 
 leaflet-map {
-  flex: 1;
+  flex: 1 1 auto;
 }
