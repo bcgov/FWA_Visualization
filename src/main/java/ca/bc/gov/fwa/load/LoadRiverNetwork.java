@@ -13,6 +13,7 @@ import com.revolsys.parallel.process.ProcessNetwork;
 import com.revolsys.record.Record;
 import com.revolsys.record.io.RecordReader;
 import com.revolsys.record.io.RecordWriter;
+import com.revolsys.record.query.Query;
 import com.revolsys.record.schema.RecordStore;
 import com.revolsys.record.schema.RecordStoreSchema;
 import com.revolsys.transaction.Transaction;
@@ -55,6 +56,10 @@ public class LoadRiverNetwork implements FwaConstants {
         }
         names.writeDisconnect();
       }
+      try (
+        Transaction transaction = jdbcRecordStore.newTransaction()) {
+        jdbcRecordStore.deleteRecords(new Query(FWA_RIVER_NETWORK));
+      }
       final ProcessNetwork network = new ProcessNetwork();
       for (int i = 0; i < 4; i++) {
         network.addProcess(() -> {
@@ -64,7 +69,6 @@ public class LoadRiverNetwork implements FwaConstants {
               RecordReader reader = fgdbRecordStore.getRecords(pathName);
               Transaction transaction = jdbcRecordStore.newTransaction();
               RecordWriter writer = jdbcRecordStore.newRecordWriter(FWA_RIVER_NETWORK)) {
-
               for (final Record record : reader) {
                 if (count.incrementAndGet() % 50000 == 0) {
                   System.out.println(count);

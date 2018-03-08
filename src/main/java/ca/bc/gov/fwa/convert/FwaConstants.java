@@ -38,5 +38,7 @@ public interface FwaConstants {
 
   static String UPSTREAM_LENGTH = "UPSTREAM_LENGTH";
 
+  static String UPSTREAM_ROUTE_MEASURE = "UPSTREAM_ROUTE_MEASURE";
+
   static String WATERSHED_CODE = "WATERSHED_CODE";
 }
