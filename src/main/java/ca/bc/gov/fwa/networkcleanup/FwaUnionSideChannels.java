@@ -1,17 +1,22 @@
 package ca.bc.gov.fwa.networkcleanup;
 
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+
 import ca.bc.gov.fwa.FwaController;
 import ca.bc.gov.fwa.convert.FwaConstants;
 
 import com.revolsys.geometry.graph.Edge;
 import com.revolsys.geometry.graph.Node;
 import com.revolsys.geometry.graph.RecordGraph;
-import com.revolsys.geometry.model.LineString;
+import com.revolsys.geometry.model.Lineal;
+import com.revolsys.jdbc.JdbcConnection;
+import com.revolsys.jdbc.field.JdbcFieldDefinition;
 import com.revolsys.jdbc.io.JdbcRecordStore;
 import com.revolsys.record.Record;
 import com.revolsys.record.io.RecordReader;
 import com.revolsys.record.query.Query;
-import com.revolsys.util.Debug;
+import com.revolsys.transaction.Transaction;
 
 public class FwaUnionSideChannels implements FwaConstants {
 
@@ -24,6 +29,10 @@ public class FwaUnionSideChannels implements FwaConstants {
   }
 
   private final JdbcRecordStore recordStore = (JdbcRecordStore)FwaController.getFwaRecordStore();
+
+  private final JdbcFieldDefinition geometryField = (JdbcFieldDefinition)this.recordStore
+    .getRecordDefinition(FWA_RIVER_NETWORK)
+    .getGeometryField();
 
   private int count = 0;
 
@@ -63,16 +72,21 @@ public class FwaUnionSideChannels implements FwaConstants {
       if (edge1.getToNode().equals(edge2.getToNode())) {
         final NetworkCleanupRecord record1 = edge1.getEdgeObject();
         final NetworkCleanupRecord record2 = edge2.getEdgeObject();
-        if (record1.equalValues(record2, "blueLineKey", "name", "watershedCode")) {
+        if (record1.equalValues(record2, "name", "watershedCode")) {
+          final String localCode1 = record1.getLocalWatershedCode();
+          final String localCode2 = record2.getLocalWatershedCode();
+
           final int id1 = record1.getId();
           final int id2 = record2.getId();
-          final LineString line1 = record1.getLine();
-          final LineString line2 = record2.getLine();
+          final Lineal line1 = record1.getLineal();
+          final Lineal line2 = record2.getLineal();
 
-          final Record dbRecord1 = this.recordStore.getRecord(FWA_RIVER_NETWORK, id1);
-          final Record dbRecord2 = this.recordStore.getRecord(FWA_RIVER_NETWORK, id2);
+          if (localCode1 == null && localCode2 != null) {
+            updateRecord(id1, line1, line2, id2);
+          } else if (localCode2 == null && localCode1 != null) {
+            updateRecord(id2, line2, line1, id1);
+          }
 
-          Debug.noOp();
         }
       }
     }
@@ -86,6 +100,26 @@ public class FwaUnionSideChannels implements FwaConstants {
   private void run() {
     final RecordGraph graph = newGraph();
     processNodes(graph);
+  }
+
+  private void updateRecord(final int updateId, final Lineal line1, final Lineal line2,
+    final int deleteId) {
+    final String sql = "UPDATE FWA.FWA_RIVER_NETWORK SET GEOMETRY = ? WHERE LINEAR_FEATURE_ID = ?";
+    try (
+      Transaction transaction = this.recordStore.newTransaction();
+      JdbcConnection connection = this.recordStore.getJdbcConnection();
+      PreparedStatement statement = connection.prepareStatement(sql);) {
+
+      final Lineal mergedLine = line1.union(line2);
+      this.geometryField.setInsertPreparedStatementValue(statement, 1, mergedLine);
+      statement.setInt(2, updateId);
+      statement.executeUpdate();
+      this.recordStore.deleteRecord(FWA_RIVER_NETWORK, deleteId);
+      logCount(LOG_MESSAGE);
+    } catch (final SQLException e) {
+      throw new RuntimeException(e);
+    }
+
   }
 
 }

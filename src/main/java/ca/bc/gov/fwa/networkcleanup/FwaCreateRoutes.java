@@ -30,7 +30,7 @@ import com.revolsys.transaction.Transaction;
 import com.revolsys.util.Debug;
 import com.revolsys.util.Exceptions;
 
-public class FwaNetworkCleanup implements FwaConstants {
+public class FwaCreateRoutes implements FwaConstants {
 
   private static final String ROUTE_UPDATE_SQL = "UPDATE FWA.FWA_RIVER_NETWORK SET " //
     + "ROUTES = ? "//
@@ -44,7 +44,7 @@ public class FwaNetworkCleanup implements FwaConstants {
     + "WHERE LINEAR_FEATURE_ID = ?";
 
   public static void main(final String[] args) {
-    new FwaNetworkCleanup().run();
+    new FwaCreateRoutes().run();
   }
 
   private final JdbcRecordStore recordStore = (JdbcRecordStore)FwaController.getFwaRecordStore();
@@ -52,8 +52,6 @@ public class FwaNetworkCleanup implements FwaConstants {
   private int count = 0;
 
   private int updateCount = 0;
-
-  private final Set<Edge<Record>> processedEdges = new HashSet<>();
 
   private final Set<Node<Record>> processedNodes = new HashSet<>();
 
@@ -204,8 +202,8 @@ public class FwaNetworkCleanup implements FwaConstants {
 
   private void run() {
     final RecordGraph graph = newGraph();
-    // routePathsProcess(graph);
-    updateRecords(graph);
+    routePathsProcess(graph);
+    // updateRecords(graph);
   }
 
   private void updateRecord(final NetworkCleanupRecord record) {

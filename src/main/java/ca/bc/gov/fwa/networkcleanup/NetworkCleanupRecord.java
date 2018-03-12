@@ -11,6 +11,7 @@ import com.revolsys.datatype.DataTypes;
 import com.revolsys.geometry.graph.BinaryRoutePath;
 import com.revolsys.geometry.model.Geometry;
 import com.revolsys.geometry.model.LineString;
+import com.revolsys.geometry.model.Lineal;
 import com.revolsys.record.AbstractRecord;
 import com.revolsys.record.Record;
 import com.revolsys.record.RecordState;
@@ -70,6 +71,8 @@ public class NetworkCleanupRecord extends AbstractRecord implements FwaConstants
 
   private final LineString line;
 
+  private final Lineal lineal;
+
   private List<BinaryRoutePath> routePaths;// = new ArrayList<>();
 
   private List<byte[]> routes;// = new ArrayList<>();
@@ -95,7 +98,8 @@ public class NetworkCleanupRecord extends AbstractRecord implements FwaConstants
     // } catch (final SQLException e) {
     // throw Exceptions.wrap(e);
     // }
-    this.line = record.getGeometry();
+    this.lineal = record.getGeometry();
+    this.line = this.lineal.getLineString(0);
     this.state = RecordState.PERSISTED;
   }
 
@@ -143,6 +147,10 @@ public class NetworkCleanupRecord extends AbstractRecord implements FwaConstants
     return this.line;
   }
 
+  public Lineal getLineal() {
+    return this.lineal;
+  }
+
   public String getLocalWatershedCode() {
     return this.localWatershedCode;
   }
@@ -186,11 +194,11 @@ public class NetworkCleanupRecord extends AbstractRecord implements FwaConstants
   }
 
   public String intern(final Record record, final String fieldName) {
-    String localWatershedCode = record.getString(fieldName);
-    if (localWatershedCode != null) {
-      localWatershedCode = localWatershedCode.intern();
+    String text = record.getString(fieldName);
+    if (text != null) {
+      text = text.intern();
     }
-    return localWatershedCode;
+    return text;
   }
 
   public boolean isProcessed() {
