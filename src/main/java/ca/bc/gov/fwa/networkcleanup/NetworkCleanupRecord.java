@@ -59,7 +59,7 @@ public class NetworkCleanupRecord extends AbstractRecord implements FwaConstants
 
   private final String watershedCode;
 
-  private final String localWatershedCode;
+  private String localWatershedCode;
 
   private final double length;
 
@@ -201,6 +201,10 @@ public class NetworkCleanupRecord extends AbstractRecord implements FwaConstants
     return text;
   }
 
+  public boolean isMultiLine() {
+    return this.lineal.isGeometryCollection();
+  }
+
   public boolean isProcessed() {
     return this.processed;
   }
@@ -237,6 +241,10 @@ public class NetworkCleanupRecord extends AbstractRecord implements FwaConstants
       this.state = RecordState.MODIFIED;
       this.downstreamLength = downstreamLength;
     }
+  }
+
+  public void setLocalWatershedCode(final String localWatershedCode) {
+    this.localWatershedCode = localWatershedCode;
   }
 
   public void setProcessed(final boolean processed) {

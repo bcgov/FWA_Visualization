@@ -169,7 +169,6 @@ public class FwaMergeRecords implements FwaConstants {
     };
 
     final Consumer4Double doubleCrossAction = (x1, y1, x2, y2) -> {
-      final LineStringEditor e = lineEditor;
       lineEditor.appendVertex(x1, y1, false);
       if (lineEditor.getVertexCount() > 1) {
         lines.add(lineEditor.newGeometry());
@@ -179,7 +178,7 @@ public class FwaMergeRecords implements FwaConstants {
       lineEditor.appendVertex(x2, y2, false);
     };
     for (final Record record : records) {
-      final String localWatershedCode = record.getString(LOCAL_WATERSHED_CODE);
+      final String localWatershedCode = record.getString(LOCAL_WATERSHED_CODE, "000000");
 
       final Record graphRecord = this.graphRecordDefinition.newRecord(record);
       final LineString sourceLine = record.getGeometry();
@@ -283,9 +282,9 @@ public class FwaMergeRecords implements FwaConstants {
 
         binaryWriter.putInt(id);
         binaryWriter.putInt(gnisId);
-        writeWaterShedCode(binaryWriter, record, FWA_WATERSHED_CODE);
-        writeWaterShedCode(binaryWriter, record, MIN_LOCAL_WATERSHED_CODE);
-        writeWaterShedCode(binaryWriter, record, MAX_LOCAL_WATERSHED_CODE);
+        writeWatershedCode(binaryWriter, record, FWA_WATERSHED_CODE);
+        writeWatershedCode(binaryWriter, record, MIN_LOCAL_WATERSHED_CODE);
+        writeWatershedCode(binaryWriter, record, MAX_LOCAL_WATERSHED_CODE);
         binaryWriter.putDouble(downstreamLength);
         binaryWriter.putDouble(upstreamLength);
         binaryWriter.putInt((int)Math.round(length * 1000));
@@ -435,7 +434,7 @@ public class FwaMergeRecords implements FwaConstants {
     System.out.println(prefix + "\t" + recordCount + "\t" + writeCount);
   }
 
-  private void writeWaterShedCode(final ChannelWriter binaryWriter, final Record record,
+  private void writeWatershedCode(final ChannelWriter binaryWriter, final Record record,
     final String fieldName) {
     final String watershedCode = record.getString(fieldName, "");
     if (watershedCode.length() == 0) {
