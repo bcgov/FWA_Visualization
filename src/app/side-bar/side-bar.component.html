@@ -10,16 +10,20 @@
         <table class="table table-bordered table-striped">
           <caption>Stream</caption>
           <tr>
+            <th>Id</th>
+            <td>{{river.properties.LINEAR_FEATURE_ID}}</td>
+          </tr>
+          <tr>
             <th>Name</th>
             <td>{{river.properties.GNIS_NAME}}</td>
           </tr>
           <tr>
             <th>Watershed Code</th>
-            <td>{{river.properties.FWA_WATERSHED_CODE}}</td>
+            <td>{{river.properties.codeRange.code}}</td>
           </tr>
           <tr>
             <th>Local Code</th>
-            <td>{{localCode()}}</td>
+            <td>{{river.properties.codeRange.toStringLocal()}}</td>
           </tr>
           <tr *ngIf="river.properties.LENGTH_METRE">
             <th>Segment length</th>

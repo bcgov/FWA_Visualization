@@ -78,21 +78,4 @@ export class SideBarComponent implements OnInit {
   km(length: number): string {
     return (length / 1000).toFixed(1) + ' km';
   }
-
-  localCode(): string {
-    const min = this.river.properties.MIN_LOCAL_WATERSHED_CODE;
-    const max = this.river.properties.MAX_LOCAL_WATERSHED_CODE;
-    if (min.equals(max)) {
-      return min.toString().replace(/-000000$/, '');
-    } else {
-      const base = min.base(max);
-      if (base == null) {
-        return min + '\n' + max;
-      } else {
-        const minSuffix = base.suffix(min);
-        const maxSuffix = base.suffix(max);
-        return `${base}-(${minSuffix}:${maxSuffix})`;
-      }
-    }
-  }
 }

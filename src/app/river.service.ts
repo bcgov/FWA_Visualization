@@ -14,6 +14,7 @@ import {FwaMapComponent} from './fwamap/fwa-map.component';
 import {MapService} from 'revolsys-angular-leaflet';
 import {RiverLocations} from './RiverLocations';
 import {WatershedCode} from './WatershedCode';
+import {WatershedCodeRange} from "./WatershedCodeRange";
 import {GnisNameService} from "./gnis-name.service";
 
 @Injectable()
@@ -210,17 +211,17 @@ export class RiverService {
 
   }
 
-  private localCode(properties: any, fieldName: string) {
-    const localWatershedCode = properties[fieldName];
-    const watershedCode = properties['FWA_WATERSHED_CODE']
+  private localCode(watershedCode: WatershedCode,
+    properties: any, fieldName: string) {
+    const localWatershedCode = properties['CODE'];
     if (localWatershedCode) {
       if (localWatershedCode.indexOf('-') == 3 || localWatershedCode.length == 3) {
-        properties[fieldName] = new WatershedCode(localWatershedCode);
+        return new WatershedCode(localWatershedCode);
       } else {
-        properties[fieldName] = new WatershedCode(watershedCode.toString() + '-' + localWatershedCode);
+        return new WatershedCode(watershedCode.code + '-' + localWatershedCode);
       }
     } else {
-      properties[fieldName] = watershedCode;
+      return watershedCode;
     }
   }
 
@@ -228,20 +229,22 @@ export class RiverService {
     const length = buffer.byteLength;
     const data = new DataView(buffer);
     let offset = 0;
+    const code = {};
     while (offset < length) {
       const properties = {};
       offset = this.readBinaryInt(data, offset, properties, 'LINEAR_FEATURE_ID');
       offset = this.readBinaryInt(data, offset, properties, 'GNIS_ID');
-      offset = this.readBinaryWatershedCode(data, offset, properties, 'FWA_WATERSHED_CODE');
-      offset = this.readBinaryWatershedCode(data, offset, properties, 'MIN_LOCAL_WATERSHED_CODE');
-      offset = this.readBinaryWatershedCode(data, offset, properties, 'MAX_LOCAL_WATERSHED_CODE');
+      offset = this.readBinaryWatershedCode(data, offset, code, 'CODE');
+      const watershedCode = new WatershedCode(code['CODE']);
+      offset = this.readBinaryWatershedCode(data, offset, code, 'CODE');
+      const localMin = this.localCode(watershedCode, code, 'CODE');
+      offset = this.readBinaryWatershedCode(data, offset, code, 'CODE');
+      const localMax = this.localCode(watershedCode, code, 'CODE');
       offset = this.readBinaryDouble(data, offset, properties, 'DOWNSTREAM_LENGTH');
       offset = this.readBinaryDouble(data, offset, properties, 'UPSTREAM_LENGTH');
       offset = this.readBinaryDoubleIntScale(data, offset, 1000.0, properties, 'LENGTH');
       this.nameService.setName(properties);
-      properties['FWA_WATERSHED_CODE'] = new WatershedCode(properties['FWA_WATERSHED_CODE']);
-      this.localCode(properties, 'MIN_LOCAL_WATERSHED_CODE');
-      this.localCode(properties, 'MAX_LOCAL_WATERSHED_CODE');
+      properties['codeRange'] = new WatershedCodeRange(watershedCode, localMin, localMax);
       const record = {
         'type': 'Feature',
         'properties': properties
@@ -275,8 +278,8 @@ export class RiverService {
       partLen = 6;
     }
     offset += 1;
+    let watershedCode: string;
     if (count > 0) {
-      let watershedCode: string;
       for (let i = 0; i < count; i++) {
         if (watershedCode) {
           watershedCode += '-';
@@ -292,8 +295,8 @@ export class RiverService {
         watershedCode += part;
         partLen = 6;
       }
-      properties[name] = watershedCode;
     }
+    properties[name] = watershedCode;
     return offset;
   }
 

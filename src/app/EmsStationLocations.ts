@@ -72,7 +72,7 @@ export class EmsStationLocations {
     this.clearDo();
     if (river) {
       //      const riverWatershedCode = river.feature.properties['FWA_WATERSHED_CODE'];
-      const riverLocalWatershedCode = river.feature.properties.MIN_LOCAL_WATERSHED_CODE.code;
+      const riverLocalWatershedCode = river.feature.properties.codeRange.localMin.code;
       const onStreamIds = this.emsStationService.emsStationIdsByLocalWatershedCode[riverLocalWatershedCode];
       if (onStreamIds) {
         this.onStreamIds = onStreamIds.slice(0);

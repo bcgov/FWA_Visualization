@@ -7,6 +7,9 @@ export class WatershedCode {
     }
   }
 
+  append(suffix: string): WatershedCode {
+    return new WatershedCode(this.code + '-' + suffix);
+  }
   equals(watershedCode: WatershedCode) {
     return this.code === watershedCode.code;
   }
@@ -48,6 +51,23 @@ export class WatershedCode {
     const partCountThis = this.parts.length;
     const partCountOther = watershedCode.parts.length;
     if (partCountOther > partCountThis) {
+      for (let i = 0; i < partCountThis; i++) {
+        const partThis = this.parts[i];
+        const partOther = watershedCode.parts[i];
+        if (partThis != partOther) {
+          return false;
+        }
+      }
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  parentOf(watershedCode: WatershedCode) {
+    const partCountThis = this.parts.length;
+    const partCountOther = watershedCode.parts.length;
+    if (partCountThis + 1 == partCountOther) {
       for (let i = 0; i < partCountThis; i++) {
         const partThis = this.parts[i];
         const partOther = watershedCode.parts[i];
