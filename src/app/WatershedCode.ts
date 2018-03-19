@@ -11,6 +11,39 @@ export class WatershedCode {
     return this.code === watershedCode.code;
   }
 
+  base(watershedCode: WatershedCode): WatershedCode {
+    const minLength = Math.min(this.parts.length, watershedCode.parts.length);
+    for (let i = 0; i < minLength; i++) {
+      const part1 = this.parts[i];
+      const part2 = watershedCode.parts[i];
+      if (part1 !== part2) {
+        if (i == 0) {
+          return null;
+        } else {
+          return this.subCode(i);
+        }
+      }
+    }
+    return this.subCode(minLength);
+  }
+
+  suffix(watershedCode: WatershedCode): string {
+    if (watershedCode.code.startsWith(this.code + '-')) {
+      return watershedCode.code.substring(this.code.length + 1);
+    } else {
+      return null;
+    }
+  }
+
+  subCode(length: number): WatershedCode {
+    let endIndex;
+    if (length > 0) {
+      endIndex = 3 + (length - 1) * 7;
+    }
+    const newCode = this.code.substring(0, endIndex);
+    return new WatershedCode(newCode);
+  }
+
   ascestorOf(watershedCode: WatershedCode) {
     const partCountThis = this.parts.length;
     const partCountOther = watershedCode.parts.length;

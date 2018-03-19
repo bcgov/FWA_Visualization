@@ -7,8 +7,8 @@
     <ng-template tabHeading>Stream</ng-template>
     <div *ngIf="river" id="riverTabContent">
       <div class="table-responsive">
-        <caption>Stream</caption>
         <table class="table table-bordered table-striped">
+          <caption>Stream</caption>
           <tr>
             <th>Name</th>
             <td>{{river.properties.GNIS_NAME}}</td>
@@ -19,9 +19,7 @@
           </tr>
           <tr>
             <th>Local Code</th>
-            <td>{{river.properties.MIN_LOCAL_WATERSHED_CODE}}
-            <div *ngIf="river.properties.MIN_LOCAL_WATERSHED_CODE != river.properties.MAX_LOCAL_WATERSHED_CODE">{{river.properties.MAX_LOCAL_WATERSHED_CODE}}</div>
-            </td>
+            <td>{{localCode()}}</td>
           </tr>
           <tr *ngIf="river.properties.LENGTH_METRE">
             <th>Segment length</th>
