@@ -2,6 +2,19 @@ import {WatershedCode} from "./WatershedCode";
 export class WatershedCodeRange {
   public readonly localMin: WatershedCode;
   public readonly localMax: WatershedCode;
+
+  static newRange(base: string, min: string, max?: string) {
+    const code = new WatershedCode(base);
+    const minCode = code.append(min);
+    let maxCode;
+    if (max) {
+      maxCode = code.append(max);
+    } else {
+      maxCode = minCode;
+    }
+    return new WatershedCodeRange(code, minCode, maxCode);
+  }
+
   constructor(
     public readonly code: WatershedCode,
     localMin: WatershedCode,
@@ -39,39 +52,47 @@ export class WatershedCodeRange {
     * 1 Upstream 
     */
   getLocation(range: WatershedCodeRange): number {
-    const watershedCode = this.code;
-    const watershedCodeLocalMin = this.localMin;
-    const watershedCodeLocalMax = this.localMax;
-    const riverWatershedCode = range.code;
-    const riverWatershedCodeLocalMin = range.localMin;
-    let riverWatershedCodeLocalMax = range.localMax;
+    const watershedCode1 = this.code;
+    const watershedCodeLocalMin1 = this.localMin;
+    const watershedCodeLocalMax1 = this.localMax;
+    const watershedCode2 = range.code;
+    const watershedCodeLocalMin2 = range.localMin;
+    let watershedCodeLocalMax2 = range.localMax;
 
-    if (watershedCode.equalsMajor(riverWatershedCode)) {
-      if (watershedCode.equals(riverWatershedCode)) {
-        if (riverWatershedCodeLocalMax.code < watershedCodeLocalMin.code) {
-          if (!riverWatershedCode.equals(riverWatershedCodeLocalMax)) {
+    if (watershedCode1.equalsMajor(watershedCode2)) {
+      if (watershedCode1.equals(watershedCode2)) {
+        if (watershedCodeLocalMax2.code < watershedCodeLocalMin1.code) {
+          if (!watershedCode2.equals(watershedCodeLocalMax2)) {
             return -1;
           }
-        } else if (riverWatershedCodeLocalMin.code > watershedCodeLocalMax.code) {
+        } else if (watershedCodeLocalMin2.code > watershedCodeLocalMax1.code) {
           return 1;
         } else {
           return 0;
         }
-      } else if (watershedCode.parentOf(riverWatershedCode)) {
-        if (watershedCodeLocalMin.equals(watershedCodeLocalMax)) {
-          if (watershedCodeLocalMin.code < riverWatershedCode.code) {
+      } else if (watershedCode1.parentOf(watershedCode2)) {
+        if (watershedCodeLocalMin1.equals(watershedCodeLocalMax1)) {
+          if (watershedCodeLocalMin1.code < watershedCode2.code) {
             return 1;
           }
-        } else if (watershedCodeLocalMin.code < riverWatershedCode.code) {
+        } else if (watershedCodeLocalMin1.code < watershedCode2.code) {
           return 1;
         }
-      } else if (watershedCode.ascestorOf(riverWatershedCode)) {
-        if (watershedCodeLocalMax < riverWatershedCodeLocalMin) {
-          return 1;
+      } else if (watershedCode1.ascestorOf(watershedCode2)) {
+        if (!watershedCodeLocalMin1.ascestorOf(watershedCode2)) {
+          if (watershedCodeLocalMin1.equals(watershedCodeLocalMax1)) {
+            if (watershedCodeLocalMin1.code < watershedCode2.code) {
+              return 1;
+            }
+          } else {
+            if (watershedCodeLocalMin1.code < watershedCode2.code) {
+              return 1;
+            }
+          }
         }
-      } else if (watershedCode.descendentOf(riverWatershedCode)) {
+      } else if (watershedCode1.descendentOf(watershedCode2)) {
         // TODO case where sub stream comes in lower down than main stream
-        if (watershedCode.greaterThan(riverWatershedCode, riverWatershedCodeLocalMax)) {
+        if (watershedCode1.greaterThan(watershedCode2, watershedCodeLocalMax2)) {
           return -1;
         }
       }

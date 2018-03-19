@@ -18,4 +18,11 @@ describe('WatershedCodeRangeSpec', () => {
     expect(a.getLocation(b)).toBe(1);
   });
 
+  it('test3', () => {
+    const a = WatershedCodeRange.newRange('930-032015', '088963');
+    const b = WatershedCodeRange.newRange('930-032015-088963-193658', '000000');
+    expect(b.getLocation(a)).toBe(-1);
+    expect(a.getLocation(b)).toBeNull();
+  });
+
 });
