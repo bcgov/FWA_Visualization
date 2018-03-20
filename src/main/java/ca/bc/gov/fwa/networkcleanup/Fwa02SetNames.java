@@ -17,12 +17,12 @@ import com.revolsys.record.query.Q;
 import com.revolsys.record.query.Query;
 import com.revolsys.transaction.Transaction;
 
-public class FwaSetNames implements FwaConstants {
+public class Fwa02SetNames implements FwaConstants {
 
   private static final int LOG_STEP = 1000;
 
   public static void main(final String[] args) {
-    new FwaSetNames().run();
+    new Fwa02SetNames().run();
   }
 
   private final JdbcRecordStore recordStore = (JdbcRecordStore)FwaController.getFwaRecordStore();

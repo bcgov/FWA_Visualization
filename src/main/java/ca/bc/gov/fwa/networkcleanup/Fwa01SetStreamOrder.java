@@ -13,12 +13,12 @@ import com.revolsys.record.io.RecordReader;
 import com.revolsys.record.query.Query;
 import com.revolsys.transaction.Transaction;
 
-public class FwaSetStreamOrder implements FwaConstants {
+public class Fwa01SetStreamOrder implements FwaConstants {
 
   private static final int LOG_STEP = 50000;
 
   public static void main(final String[] args) {
-    new FwaSetStreamOrder().run();
+    new Fwa01SetStreamOrder().run();
   }
 
   private final JdbcRecordStore recordStore = (JdbcRecordStore)FwaController.getFwaRecordStore();

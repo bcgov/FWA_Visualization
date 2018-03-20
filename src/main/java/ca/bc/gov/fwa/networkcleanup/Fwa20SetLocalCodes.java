@@ -21,14 +21,14 @@ import com.revolsys.record.query.Query;
 import com.revolsys.transaction.Transaction;
 import com.revolsys.util.Debug;
 
-public class FwaSetLocalCodes implements FwaConstants {
+public class Fwa20SetLocalCodes implements FwaConstants {
 
   private static final int LOG_STEP = 100000;
 
   private static final String SET_LOCAL_CODE = "Set local code";
 
   public static void main(final String[] args) {
-    new FwaSetLocalCodes().run();
+    new Fwa20SetLocalCodes().run();
   }
 
   private final JdbcRecordStore recordStore = (JdbcRecordStore)FwaController.getFwaRecordStore();
@@ -145,7 +145,8 @@ public class FwaSetLocalCodes implements FwaConstants {
           if (localCode1 == null && watershedCode.startsWith(watershedCode1 + "-")) {
             final String newLocalCode = watershedCode.substring(watershedCode1.length() + 1);
             localCode1 = updateRecord(record1, newLocalCode);
-          } else if (localCode2 == null && watershedCode.startsWith(watershedCode2 + "-")) {
+          }
+          if (localCode2 == null && watershedCode.startsWith(watershedCode2 + "-")) {
             final String newLocalCode = watershedCode.substring(watershedCode2.length() + 1);
             localCode2 = updateRecord(record2, newLocalCode);
           }

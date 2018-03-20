@@ -30,7 +30,7 @@ import com.revolsys.util.Debug;
 import com.revolsys.util.Exceptions;
 import com.revolsys.value.LongValue;
 
-public class FwaSetUpstreamDownstreamLengths implements FwaConstants {
+public class Fwa11SetUpstreamDownstreamLengths implements FwaConstants {
 
   private static final String ROUTE_UPDATE_SQL = "UPDATE FWA.FWA_RIVER_NETWORK SET " //
     + "ROUTES = ? "//
@@ -44,7 +44,7 @@ public class FwaSetUpstreamDownstreamLengths implements FwaConstants {
     + "WHERE LINEAR_FEATURE_ID = ?";
 
   public static void main(final String[] args) {
-    new FwaSetUpstreamDownstreamLengths().run();
+    new Fwa11SetUpstreamDownstreamLengths().run();
   }
 
   private final JdbcRecordStore recordStore = (JdbcRecordStore)FwaController.getFwaRecordStore();

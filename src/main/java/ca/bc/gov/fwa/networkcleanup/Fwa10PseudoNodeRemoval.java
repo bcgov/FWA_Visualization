@@ -17,12 +17,12 @@ import com.revolsys.record.io.RecordReader;
 import com.revolsys.record.query.Query;
 import com.revolsys.transaction.Transaction;
 
-public class FwaPseudoNodeRemoval implements FwaConstants {
+public class Fwa10PseudoNodeRemoval implements FwaConstants {
 
   private static final int LOG_STEP = 100000;
 
   public static void main(final String[] args) {
-    new FwaPseudoNodeRemoval().run();
+    new Fwa10PseudoNodeRemoval().run();
   }
 
   private final JdbcRecordStore recordStore = (JdbcRecordStore)FwaController.getFwaRecordStore();
