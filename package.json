@@ -30,7 +30,6 @@
 		"leaflet": "=1.0.3",
 		"leaflet-ajax": "=2.1.0",
 		"ngx-bootstrap": "^2.0.3",
-		"npm": "^5.7.1",
 		"revolsys-angular-leaflet": "~1.0.0-beta.15",
 		"revolsys-bcgov-angular-page": "~1.0.0-beta.8",
 		"rxjs": "^5.5.7",
