@@ -2,6 +2,8 @@ node ('master'){
   stage ('Deploy') {
     checkout scm
     sh 'npm install'
-    sh 'npm run deploy-local'
+    sh 'npm run build-demo'
+    sh 'rm -r /var/www/bcgov.revolsys.com/htdocs/emsDemo/*'
+    sh 'cp -r dist/ -r /var/www/bcgov.revolsys.com/htdocs/emsDemo/'
   }
 }

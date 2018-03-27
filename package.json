@@ -10,7 +10,7 @@
 		"lint": "ng lint",
 		"e2e": "ng e2e",
 		"deploy-gh-pages": "ng build --prod --base-href '/FWA_Visualization/'; angular-cli-ghpages",
-    "deploy-local": "ng build --prod --base-href '/emsDemo/' --output-path /var/www/bcgov.revolsys.com/htdocs/emsDemo"
+    "build-demo": "ng build --prod --base-href '/emsDemo/'"
 	},
 	"private": true,
 	"dependencies": {
