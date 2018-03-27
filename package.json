@@ -9,7 +9,8 @@
 		"test": "ng test",
 		"lint": "ng lint",
 		"e2e": "ng e2e",
-		"deploy-gh-pages": "ng build --prod --base-href '/FWA_Visualization/'; angular-cli-ghpages"
+		"deploy-gh-pages": "ng build --prod --base-href '/FWA_Visualization/'; angular-cli-ghpages",
+    "deploy-local": "ng build --prod --base-href '/emsDemo/' --output-path /var/www/bcgov.revolsys.com/htdocs/emsDemo"
 	},
 	"private": true,
 	"dependencies": {
@@ -32,7 +33,7 @@
 		"ngx-bootstrap": "^2.0.3",
 		"revolsys-angular-leaflet": "~1.0.0-beta.15",
 		"revolsys-bcgov-angular-page": "~1.0.0-beta.8",
-		"rxjs": "^5.5.7",
+		"rxjs": "^5.5.8",
 		"zone.js": "^0.8.20"
 	},
 	"devDependencies": {
@@ -50,7 +51,7 @@
 		"karma-coverage-istanbul-reporter": "^1.2.1",
 		"karma-jasmine": "~1.1.0",
 		"karma-jasmine-html-reporter": "^0.2.2",
-		"ng-packagr": "^2.2.0",
+		"ng-packagr": "^2.4.1",
 		"protractor": "~5.1.2",
 		"typescript": "~2.6.2"
 	}
