@@ -10,6 +10,7 @@ import ca.bc.gov.fwa.FwaController;
 import com.revolsys.collection.map.IntHashMap;
 import com.revolsys.datatype.DataTypes;
 import com.revolsys.geometry.cs.projection.CoordinatesOperation;
+import com.revolsys.geometry.cs.projection.CoordinatesOperationPoint;
 import com.revolsys.geometry.graph.Edge;
 import com.revolsys.geometry.graph.RecordGraph;
 import com.revolsys.geometry.model.BoundingBox;
@@ -209,7 +210,7 @@ public class FwaMergeRecords implements FwaConstants {
   }
 
   private int graphWrite(final Path file, final RecordGraph graph, final int maxSegmentLength) {
-    final double[] coordinates = new double[2];
+    final CoordinatesOperationPoint coordinates = new CoordinatesOperationPoint();
     final CoordinatesOperation coordinatesOperation = GEOMETRY_FACTORY
       .getCoordinatesOperation(GEOMETRY_FACTORY.getGeographicGeometryFactory());
     try (
@@ -266,11 +267,10 @@ public class FwaMergeRecords implements FwaConstants {
           binaryWriter.putInt(newLine.getVertexCount());
 
           newLine.forEachVertex((x, y) -> {
-            coordinates[0] = x;
-            coordinates[1] = y;
-            coordinatesOperation.perform(2, coordinates, 2, coordinates);
-            final int lonInt = (int)Math.round(coordinates[0] * 10000000);
-            final int latInt = (int)Math.round(coordinates[1] * 10000000);
+            coordinates.setPoint(x, y);
+            coordinatesOperation.perform(coordinates);
+            final int lonInt = (int)Math.round(coordinates.x * 10000000);
+            final int latInt = (int)Math.round(coordinates.y * 10000000);
             binaryWriter.putInt(lonInt);
             binaryWriter.putInt(latInt);
           });
