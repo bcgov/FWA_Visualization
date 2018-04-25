@@ -96,7 +96,7 @@ public class FwaMergeRecords implements FwaConstants {
       .setGeometryFactory(GEOMETRY_FACTORY)//
       .getRecordDefinition();
 
-  private final Path fwaPath = Paths.get(PATH + GEOMETRY_FACTORY.getCoordinateSystemId() + "/bin");
+  private final Path fwaPath = Paths.get(PATH + GEOMETRY_FACTORY.getHorizontalCoordinateSystemId() + "/bin");
 
   private final RecordStore recordStore = FwaController.getFwaRecordStore();
 
