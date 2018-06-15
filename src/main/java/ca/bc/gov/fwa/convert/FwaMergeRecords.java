@@ -222,7 +222,7 @@ public class FwaMergeRecords implements FwaConstants {
         if ((Boolean)record.getValue(INTERSECT_IND)) {
           final Record stream = this.fwaVisualizationRecordDefinition.newRecord(record);
           final LineString line = record.getGeometry().convertGeometry(GEOMETRY_FACTORY);
-          final LineStringEditor newLine = GEOMETRY_FACTORY.newLineStringBuilder();
+          final LineStringEditor newLine = GEOMETRY_FACTORY.newLineStringEditor();
           newLine.appendVertex(line.getX(0), line.getY(0));
           final DoubleValue segmentLength = new DoubleValue();
           line.forEachSegment((x1, y1, x2, y2) -> {
