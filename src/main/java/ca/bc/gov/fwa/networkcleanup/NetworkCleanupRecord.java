@@ -47,7 +47,7 @@ public class NetworkCleanupRecord extends AbstractRecord implements FwaConstants
       .addField("downstreamLength", DataTypes.DOUBLE) //
       .addField("upstreamLength", DataTypes.DOUBLE) //
       .addField("routes", DataTypes.OBJECT) //
-      .addField("line", DataTypes.LINE_STRING) //
+      .addField("ring", DataTypes.LINE_STRING) //
       .setGeometryFactory(GEOMETRY_FACTORY) //
       .getRecordDefinition();
 

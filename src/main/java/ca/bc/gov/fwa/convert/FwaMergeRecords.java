@@ -96,7 +96,8 @@ public class FwaMergeRecords implements FwaConstants {
       .setGeometryFactory(GEOMETRY_FACTORY)//
       .getRecordDefinition();
 
-  private final Path fwaPath = Paths.get(PATH + GEOMETRY_FACTORY.getHorizontalCoordinateSystemId() + "/bin");
+  private final Path fwaPath = Paths
+    .get(PATH + GEOMETRY_FACTORY.getHorizontalCoordinateSystemId() + "/bin");
 
   private final RecordStore recordStore = FwaController.getFwaRecordStore();
 
@@ -191,7 +192,7 @@ public class FwaMergeRecords implements FwaConstants {
 
       if (boundingBox != null) {
         if (graphLine.intersects(boundingBox)) {
-          final boolean covers = boundingBox.covers(graphLine);
+          final boolean covers = boundingBox.bboxCovers(graphLine);
           if (!covers) {
             graphRecord.setValue(CONTAINED_IND, false);
             final Geometry intersection = rectangle.intersection(graphLine);
@@ -301,9 +302,10 @@ public class FwaMergeRecords implements FwaConstants {
     com.revolsys.io.file.Paths.createParentDirectories(tilePath);
     final BoundingBox boundingBox = GEOMETRY_FACTORY //
       .newBoundingBox(tileX, tileY, tileX + tileSize, tileY + tileSize);
-    final BoundingBox albersBoundingBox = boundingBox//
+    final BoundingBox albersBoundingBox = boundingBox //
+      .bboxEditor() //
       .expandPercent(0.02)//
-      .convert(GEOMETRY_FACTORY_ALBERS) //
+      .setGeometryFactory(GEOMETRY_FACTORY_ALBERS) //
     ;
     final Query query = new Query(FWA_RIVER_NETWORK) //
       .and(Q.greaterThanEqual(BLUE_LINE_KEY_STREAM_ORDER, streamOrder)) //
