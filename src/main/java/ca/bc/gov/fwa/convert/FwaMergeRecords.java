@@ -21,7 +21,6 @@ import com.revolsys.geometry.model.Lineal;
 import com.revolsys.geometry.model.Point;
 import com.revolsys.geometry.model.coordinates.LineSegmentUtil;
 import com.revolsys.geometry.model.editor.LineStringEditor;
-import com.revolsys.geometry.model.impl.RectangleXY;
 import com.revolsys.io.PathName;
 import com.revolsys.io.channels.ChannelWriter;
 import com.revolsys.parallel.process.ProcessNetwork;
@@ -169,12 +168,6 @@ public class FwaMergeRecords implements FwaConstants {
   }
 
   private RecordGraph graphNew(final Iterable<Record> records, final BoundingBox boundingBox) {
-    final RectangleXY rectangle;
-    if (boundingBox == null) {
-      rectangle = null;
-    } else {
-      rectangle = boundingBox.toRectangle();
-    }
     final RecordGraph graph = new RecordGraph();
     for (final Record record : records) {
       final String localWatershedCode = record.getString(LOCAL_WATERSHED_CODE, "000000");
@@ -195,7 +188,7 @@ public class FwaMergeRecords implements FwaConstants {
           final boolean covers = boundingBox.bboxCovers(graphLine);
           if (!covers) {
             graphRecord.setValue(CONTAINED_IND, false);
-            final Geometry intersection = rectangle.intersection(graphLine);
+            final Geometry intersection = graphLine.intersectionBbox(boundingBox);
             if (intersection.isEmpty() || !(intersection instanceof Lineal)) {
               graphRecord.setValue(INTERSECT_IND, false);
             }
@@ -215,7 +208,8 @@ public class FwaMergeRecords implements FwaConstants {
     final CoordinatesOperation coordinatesOperation = GEOMETRY_FACTORY
       .getCoordinatesOperation(GEOMETRY_FACTORY.getGeographicGeometryFactory());
     try (
-      // RecordWriter tsvWriter = Tsv.newRecordWriter(this.fwaVisualizationRecordDefinition, file,
+      // RecordWriter tsvWriter =
+      // Tsv.newRecordWriter(this.fwaVisualizationRecordDefinition, file,
       // false, false);
       ChannelWriter binaryWriter = new PathResource(file).newResourceChangeExtension("bin")
         .newChannelWriter();) {
