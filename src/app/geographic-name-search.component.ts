@@ -1,3 +1,5 @@
+import {Observable} from 'rxjs';
+import {map} from 'rxjs/operators';
 import {
   AfterViewInit,
   Component,
@@ -14,10 +16,9 @@ import {
   SearchResult,
   SearchZoomComponent
 } from 'revolsys-angular-leaflet';
-
 @Component({
   selector: 'app-geographic-name-search',
-  template: `<leaflet-search-zoom label="Geographic Name" style="width: 300px; display: flex"></leaflet-search-zoom>`
+  template: `<leaflet-search-zoom label="Geographic Name"></leaflet-search-zoom>`
 })
 export class GeographicNameSearchComponent implements AfterViewInit {
   @ViewChild(SearchZoomComponent)
@@ -37,7 +38,8 @@ export class GeographicNameSearchComponent implements AfterViewInit {
     }
   }
 
-  search(query): Promise<SearchResult[]> {
+  search(query): Observable<SearchResult[]> {
+    console.log(query);
     const params = new HttpParams() //
       .set('name', query) //
       .set('minScore', '0.7') //
@@ -51,33 +53,36 @@ export class GeographicNameSearchComponent implements AfterViewInit {
     return this.http.jsonp(
       `https://apps.gov.bc.ca/pub/bcgnws/names/soundlike?${params}`,
       'jsonp12345'
-    ).toPromise().then(data => {
-      const matches: SearchResult[] = [];
-      const found = false;
-      const features = data['features'];
-      if (features) {
-        for (const feature of features) {
-          const props = feature.properties;
-          const name = props.name;
-          let label = name;
-          let featureType = props.featureType;
-          if (featureType) {
-            const parenStartIndex = featureType.indexOf('(');
-            const parenEndIndex = featureType.indexOf(')');
-            if (parenStartIndex !== -1 && parenEndIndex > parenStartIndex) {
-              featureType = featureType.substring(0, parenStartIndex) + featureType.substring(parenEndIndex + 1);
+    ).pipe(
+      map(data => {
+        const matches: SearchResult[] = [];
+        const found = false;
+        const features = data['features'];
+        if (features) {
+          for (const feature of features) {
+            const props = feature.properties;
+            const name = props.name;
+            let label = name;
+            let featureType = props.featureType;
+            if (featureType) {
+              const parenStartIndex = featureType.indexOf('(');
+              const parenEndIndex = featureType.indexOf(')');
+              if (parenStartIndex !== -1 && parenEndIndex > parenStartIndex) {
+                featureType = featureType.substring(0, parenStartIndex) + featureType.substring(parenEndIndex + 1);
+              }
+              label += ' (' + featureType + ')';
             }
-            label += ' (' + featureType + ')';
+            label += '  ' + props.feature.relativeLocation;
+            matches.push(new SearchResult(
+              props['uri'],
+              name,
+              label,
+              props['featurePoint']
+            ));
           }
-          label += '  ' + props.feature.relativeLocation;
-          matches.push(new SearchResult(
-            props['uri'],
-            label,
-            props['featurePoint']
-          ));
         }
-      }
-      return matches;
-    });
+        return matches;
+      })
+      );
   }
 }

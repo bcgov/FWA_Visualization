@@ -1,4 +1,4 @@
-import {Subject} from 'rxjs/Subject';
+import {Subject} from 'rxjs';
 import {GeoJSON} from 'leaflet';
 import {RiverService} from './river.service';
 import {WatershedCode} from './WatershedCode';

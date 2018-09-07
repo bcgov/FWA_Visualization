@@ -1,10 +1,10 @@
-<tabset  #tabs>
-  <tab>
-    <ng-template tabHeading><i class="glyphicon glyphicon-question-sign" aria-hidden="true"></i> Help</ng-template>
+<mat-tab-group>
+  <mat-tab #tabHelp>
+    <ng-template mat-tab-label><i class="glyphicon glyphicon-question-sign" aria-hidden="true"></i> Help</ng-template>
     <p>Click on a stream to view upstream/downstream info</p>
-  </tab>
-  <tab [disabled]="!river">
-    <ng-template tabHeading>Stream</ng-template>
+  </mat-tab>
+  <mat-tab [disabled]="!river" #tabRiver>
+    <ng-template mat-tab-label>Stream</ng-template>
     <div *ngIf="river" id="riverTabContent">
       <div class="table-responsive">
         <table class="table table-bordered table-striped">
@@ -65,9 +65,9 @@
         </table>
       </div>
     </div>
-  </tab>
-  <tab [disabled]="!emsStation">
-    <ng-template tabHeading>EmsStation</ng-template>
+  </mat-tab>
+  <mat-tab [disabled]="!emsStation" #tabEmsStation>
+    <ng-template mat-tab-label>EmsStation</ng-template>
     <div *ngIf="emsStation">
       <div class="table-responsive">
         <table class="table table-bordered table-striped">
@@ -100,5 +100,5 @@
         </table>
       </div>
     </div>
-  </tab>
-</tabset>
+  </mat-tab>
+</mat-tab-group>

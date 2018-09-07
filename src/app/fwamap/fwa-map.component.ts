@@ -1,4 +1,3 @@
-import 'rxjs/add/operator/toPromise';
 import {
   Component,
   ElementRef,

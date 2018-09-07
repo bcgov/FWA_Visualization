@@ -4,11 +4,10 @@ import {
   ViewChild
 } from '@angular/core';
 
-import {TabsetComponent} from 'ngx-bootstrap/tabs';
-
 import {RiverService} from '../river.service';
 
 import {EmsStationService} from '../ems-station.service';
+import {MatTab} from "@angular/material/tabs";
 
 @Component({
   selector: 'app-side-bar',
@@ -17,26 +16,30 @@ import {EmsStationService} from '../ems-station.service';
 })
 export class SideBarComponent implements OnInit {
 
-  @ViewChild('tabs') tabs: TabsetComponent;
+  @ViewChild('tabHelp') tabHelp: MatTab;
+
+  @ViewChild('tabRiver') tabRiver: MatTab;
+
+  @ViewChild('tabEmsStation') tabEmsStation: MatTab;
 
   constructor(
     public riverService: RiverService,
     private emsStationService: EmsStationService
   ) {
     this.riverService.selectedRiverLocations.subscribe((selectedRiver) => {
-      this.tabs.tabs[1].disabled = selectedRiver === null;
+      this.tabRiver.disabled = selectedRiver === null;
       if (selectedRiver == null) {
-        this.tabs.tabs[0].active = true;
+        this.tabHelp.isActive = true;
       } else {
-        this.tabs.tabs[1].active = true;
+        this.tabRiver.isActive = true;
       }
     });
     this.emsStationService.selectedEmsStationChange.subscribe((selectedEmsStation) => {
-      this.tabs.tabs[2].disabled = selectedEmsStation === null;
+      this.tabEmsStation.disabled = selectedEmsStation === null;
       if (selectedEmsStation == null) {
-        this.tabs.tabs[0].active = true;
+        this.tabHelp.isActive = true;
       } else {
-        this.tabs.tabs[2].active = true;
+        this.tabEmsStation.isActive = true;
       }
     });
   }

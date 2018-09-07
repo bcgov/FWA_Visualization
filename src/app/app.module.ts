@@ -1,16 +1,17 @@
 import 'leaflet/dist/images/marker-shadow.png';
 import 'leaflet/dist/images/marker-icon.png';
-import {BrowserModule} from '@angular/platform-browser';
 import {NgModule} from '@angular/core';
 import {FormsModule} from '@angular/forms';
 import {HttpClientModule, HttpClientJsonpModule} from '@angular/common/http';
+import {BrowserModule} from '@angular/platform-browser';
+import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
+
 import {AppRoutingModule} from './app-routing.module';
+import {AppComponent} from "./app.component";
 
-import {BcgovPageModule} from 'revolsys-bcgov-angular-page';
+import {RevolsysAngularBcgovPageModule} from 'revolsys-angular-bcgov-page';
 
-import {TabsModule} from 'ngx-bootstrap/tabs';
-import {TypeaheadModule} from 'ngx-bootstrap/typeahead';
-
+import {MatTabsModule} from '@angular/material/tabs';
 import {GeographicNameSearchComponent} from './geographic-name-search.component';
 import {EmsStationService} from './ems-station.service';
 import {RiverService} from './river.service';
@@ -26,6 +27,7 @@ import {SideBarComponent} from './side-bar/side-bar.component';
 
 @NgModule({
   declarations: [
+    AppComponent,
     FwaMapComponent,
     FwaLegendComponent,
     LayoutComponent,
@@ -34,15 +36,15 @@ import {SideBarComponent} from './side-bar/side-bar.component';
   ],
   imports: [
     BrowserModule,
+    BrowserAnimationsModule,
     FormsModule,
     HttpClientModule,
     HttpClientJsonpModule,
 
     AppRoutingModule,
 
-    TabsModule.forRoot(),
-    TypeaheadModule.forRoot(),
-    BcgovPageModule.forRoot({
+    MatTabsModule,
+    RevolsysAngularBcgovPageModule.forRoot({
       basePath: '/',
       title: 'FWA Streams and EMS Stations',
       fullWidthContent: true
@@ -56,6 +58,6 @@ import {SideBarComponent} from './side-bar/side-bar.component';
     GnisNameService,
     RiverService
   ],
-  bootstrap: [LayoutComponent]
+  bootstrap: [AppComponent]
 })
 export class AppModule {}
